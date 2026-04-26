@@ -15,7 +15,7 @@
     <meta name="author" content="Tùng Phạm" />
     <meta
       property="og:title"
-      content="Cờ Úp - Minimax Engine with Alpha-Beta Pruning"
+      content="Cờ Úp - Một sản phẩm của Cờ tướng Chấm Top"
     />
     <meta
       property="og:description"
@@ -31,7 +31,7 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta
       name="twitter:title"
-      content="Cờ Úp - Minimax Engine with Alpha-Beta Pruning"
+      content="Cờ Úp - Một sản phẩm của Cờ tướng Chấm Top"
     />
     <meta
       name="twitter:description"
@@ -64,7 +64,6 @@
       src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3585118770961536"
       crossorigin="anonymous"
     ></script>
-    <!-- Global site tag (gtag.js) - Google Analytics -->
     <script
       async
       src="https://www.googletagmanager.com/gtag/js?id=G-QEW6K9YPY7"
@@ -98,7 +97,14 @@
     >
       <div class="text-center mb-6">
         <h1 class="text-4xl font-bold text-red-500 mb-2">Cờ Úp</h1>
-        <p class="text-gray-400">Minimax Engine with Alpha-Beta Pruning</p>
+        <p class="text-gray-400">
+          Một sản phẩm của
+          <a
+            href="https://cotuong.top"
+            class="text-blue-400 hover:text-blue-300 underline"
+            >Cờ tướng Chấm Top</a
+          >
+        </p>
       </div>
 
       <div
@@ -168,6 +174,7 @@
           hiddenPieces: {},
           gameMode: "pve",
           isThinking: false,
+          checkCount: { r: 0, b: 0 },
 
           startPosition: {
             a9: "bX",
@@ -259,6 +266,7 @@
           startNewGame() {
             this.turn = "r";
             this.isThinking = false;
+            this.checkCount = { r: 0, b: 0 };
             this.shufflePieces();
             this.board.position(this.startPosition);
 
@@ -381,7 +389,6 @@
 
             this.turn = this.turn === "r" ? "b" : "r";
 
-            // If the game ends here, stop the AI from making a move
             if (this.checkWinCondition(this.board.position())) return;
 
             if (this.gameMode === "pve" && this.turn === "b") {
@@ -390,7 +397,6 @@
             }
           },
 
-          // --- CORE CHECK/FLYING GENERAL VALIDATION ---
           isBoardStateValid(movingColor, boardState) {
             let redKingSq = null;
             let blackKingSq = null;
@@ -400,7 +406,6 @@
               if (boardState[sq] === "bK") blackKingSq = sq;
             }
 
-            // 1. Flying General Rule
             if (redKingSq && blackKingSq) {
               const fileMap = {
                 a: 0,
@@ -440,7 +445,6 @@
               }
             }
 
-            // 2. King Safety Rule
             let myKingSq = movingColor === "r" ? redKingSq : blackKingSq;
             if (!myKingSq) return true;
 
@@ -478,8 +482,7 @@
           },
 
           processMove(source, target, piece, boardState, updateUI = false) {
-            // [THÊM MỚI] Kiểm tra xem ô đích có quân cờ cùng màu không.
-            // Nếu có, không cho phép đi (return false).
+            // Kiểm tra không ăn quân cùng màu
             let targetPiece = boardState[target];
             if (targetPiece && targetPiece[0] === piece[0]) {
               return false;
@@ -514,6 +517,7 @@
               (k) => simulatedState[k] === enemyColor + "K",
             );
 
+            // Kiểm tra tự chiếu / để tướng đối mặt
             if (
               enemyKingSq &&
               !this.isBoardStateValid(piece[0], simulatedState)
@@ -532,7 +536,34 @@
               return false;
             }
 
+            // Kiểm tra luật cấm chiếu quá 3 lần liên tục
+            let isCheckingEnemy = !this.isBoardStateValid(
+              enemyColor,
+              simulatedState,
+            );
+            if (isCheckingEnemy && this.checkCount[piece[0]] >= 3) {
+              if (updateUI) {
+                Swal.fire({
+                  title: "Lỗi luật chơi",
+                  text: "Bạn không được chiếu tướng liên tục quá 3 lần!",
+                  icon: "error",
+                  toast: true,
+                  position: "top",
+                  timer: 3000,
+                  showConfirmButton: false,
+                });
+              }
+              return false;
+            }
+
             if (updateUI) {
+              // Cập nhật bộ đếm chiếu
+              if (isCheckingEnemy) {
+                this.checkCount[piece[0]]++;
+              } else {
+                this.checkCount[piece[0]] = 0;
+              }
+
               if (isHidden) {
                 let realPiece = this.hiddenPieces[source];
                 delete this.hiddenPieces[source];
@@ -823,7 +854,6 @@
                 if (fromSq === toSq) return;
 
                 let targetPiece = boardState[toSq];
-
                 if (targetPiece && targetPiece[0] === color) return;
 
                 let isValidGeometry = isHidden
@@ -857,7 +887,14 @@
                     !enemyKingSq ||
                     this.isBoardStateValid(color, simulatedState)
                   ) {
-                    moves.push({ from: fromSq, to: toSq, piece: piece });
+                    // Kiểm tra AI không bị vi phạm 3 lần chiếu liên tiếp
+                    let isCheckingEnemy = !this.isBoardStateValid(
+                      enemyColor,
+                      simulatedState,
+                    );
+                    if (!(isCheckingEnemy && this.checkCount[color] >= 3)) {
+                      moves.push({ from: fromSq, to: toSq, piece: piece });
+                    }
                   }
                 }
               });
@@ -865,9 +902,7 @@
             return moves.sort(() => Math.random() - 0.5);
           },
 
-          // --- GAME OVER VALIDATION AND UI ---
           checkWinCondition(boardState) {
-            // Condition 1: A King is physically captured
             let kings = Object.values(boardState).filter((p) => p[1] === "K");
             if (kings.length < 2) {
               let winner = kings[0] === "rK" ? "Đỏ" : "Đen";
@@ -875,7 +910,6 @@
               return true;
             }
 
-            // Condition 2: The current player has no legal moves left (Checkmate / Stalemate)
             let possibleMoves = this.generateLegalMoves(this.turn, boardState);
             if (possibleMoves.length === 0) {
               let winner = this.turn === "r" ? "Đen" : "Đỏ";
