@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="vi">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -478,6 +478,13 @@
           },
 
           processMove(source, target, piece, boardState, updateUI = false) {
+            // [THÊM MỚI] Kiểm tra xem ô đích có quân cờ cùng màu không.
+            // Nếu có, không cho phép đi (return false).
+            let targetPiece = boardState[target];
+            if (targetPiece && targetPiece[0] === piece[0]) {
+              return false;
+            }
+
             let isHidden = piece[1] === "X";
 
             let fakeType = this.originalSquares[source]
