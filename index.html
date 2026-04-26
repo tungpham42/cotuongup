@@ -1,8 +1,16 @@
 <!doctype html>
-<html lang="vi">
+<html
+  lang="vi"
+  x-data="{ darkMode: localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches) }"
+  :class="{ 'dark': darkMode }"
+  x-init="$watch('darkMode', val => localStorage.setItem('theme', val ? 'dark' : 'light'))"
+>
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
     <meta
       name="description"
@@ -13,10 +21,7 @@
       content="Cờ Úp, Xiangqi, Chinese Chess, Minimax, Alpha-Beta Pruning, Game AI, JavaScript Game"
     />
     <meta name="author" content="Tùng Phạm" />
-    <meta
-      property="og:title"
-      content="Cờ Úp - Một sản phẩm của Cờ tướng Chấm Top"
-    />
+    <meta property="og:title" content="Cờ Úp - Trải nghiệm tuyệt vời" />
     <meta
       property="og:description"
       content="Trò chơi Cờ Úp với AI sử dụng thuật toán thông minh. Chơi ngay để thử thách trí tuệ của bạn!"
@@ -25,44 +30,47 @@
       property="og:image"
       content="https://coup.cotuong.top/assets/images/1200x630.jpg"
     />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
     <meta property="og:type" content="website" />
-    <meta property="og:site_name" content="Cờ Úp" />
-
     <meta property="og:url" content="https://coup.cotuong.top" />
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta
-      name="twitter:title"
-      content="Cờ Úp - Một sản phẩm của Cờ tướng Chấm Top"
-    />
-    <meta
-      name="twitter:description"
-      content="Trò chơi Cờ Úp với AI sử dụng thuật toán thông minh. Chơi ngay để thử thách trí tuệ của bạn!"
-    />
-    <meta
-      name="twitter:image"
-      content="https://coup.cotuong.top/assets/images/1200x630.jpg"
-    />
     <title>Cờ Úp</title>
     <link
       rel="icon"
       type="image/svg+xml"
       href="https://coup.cotuong.top/assets/images/favicon.svg"
     />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
+        darkMode: "class",
         theme: {
           extend: {
-            colors: { board: "#a1662f" },
+            fontFamily: {
+              sans: ['"Plus Jakarta Sans"', "sans-serif"],
+            },
+            colors: {
+              board: {
+                light: "#E8CBAA", // Ấm áp, màu gỗ sồi sáng
+                dark: "#8B5A2B", // Gỗ óc chó trầm ấm
+              },
+            },
+            boxShadow: {
+              soft: "0 10px 40px -10px rgba(0,0,0,0.08)",
+              softDark: "0 10px 40px -10px rgba(0,0,0,0.5)",
+            },
           },
         },
       };
     </script>
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
     <link
       rel="stylesheet"
       href="https://coup.cotuong.top/assets/xiangqiboard.css"
@@ -72,24 +80,6 @@
       defer
       src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"
     ></script>
-    <script
-      async
-      src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3585118770961536"
-      crossorigin="anonymous"
-    ></script>
-    <script
-      async
-      src="https://www.googletagmanager.com/gtag/js?id=G-QEW6K9YPY7"
-    ></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag() {
-        dataLayer.push(arguments);
-      }
-      gtag("js", new Date());
-
-      gtag("config", "G-QEW6K9YPY7");
-    </script>
 
     <style>
       .hidden-piece {
@@ -98,86 +88,198 @@
       #board {
         user-select: none;
         -webkit-user-select: none;
+        width: 100%;
+        max-width: 500px;
+        margin: 0 auto;
+      }
+      /* Tinh chỉnh mượt mà cho theme switch */
+      body {
+        transition:
+          background-color 0.3s ease,
+          color 0.3s ease;
+      }
+      .glass-panel {
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
       }
     </style>
   </head>
   <body
-    class="bg-gray-900 text-gray-100 min-h-screen flex items-center justify-center font-sans"
+    class="bg-slate-50 text-slate-800 dark:bg-slate-900 dark:text-slate-100 min-h-screen flex flex-col font-sans selection:bg-rose-200 dark:selection:bg-rose-900"
   >
     <div
       x-data="xiangqiGame()"
-      class="container mx-auto px-4 max-w-4xl py-8 flex flex-col items-center"
+      class="container mx-auto px-4 py-6 md:py-10 max-w-3xl flex-1 flex flex-col"
     >
-      <div class="text-center mb-6">
-        <h1 class="text-4xl font-bold text-red-500 mb-2">Cờ Úp</h1>
-        <p class="text-gray-400">
-          Một sản phẩm của
-          <a
-            href="https://cotuong.top"
-            class="text-blue-400 hover:text-blue-300 underline"
-            >Cờ tướng Chấm Top</a
+      <header class="flex justify-between items-center mb-8">
+        <div>
+          <h1
+            class="text-3xl md:text-4xl font-extrabold bg-gradient-to-br from-rose-500 to-orange-400 bg-clip-text text-transparent mb-1"
           >
-        </p>
-      </div>
+            Cờ Úp
+          </h1>
+          <p class="text-sm font-medium text-slate-500 dark:text-slate-400">
+            Sản phẩm của
+            <a
+              href="https://cotuong.top"
+              class="text-rose-500 hover:text-rose-600 transition-colors"
+              >Cờ tướng Chấm Top</a
+            >
+          </p>
+        </div>
+
+        <button
+          @click="darkMode = !darkMode"
+          class="p-2.5 rounded-2xl bg-white dark:bg-slate-800 shadow-sm border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 transition-all hover:scale-105 active:scale-95"
+          aria-label="Toggle Dark Mode"
+        >
+          <svg
+            x-show="darkMode"
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-6 w-6"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
+            />
+          </svg>
+          <svg
+            x-show="!darkMode"
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-6 w-6"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            stroke-width="2"
+            style="display: none"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
+            />
+          </svg>
+        </button>
+      </header>
 
       <div
-        class="flex flex-wrap gap-4 mb-6 items-center w-[500px] justify-between"
+        class="bg-white/80 dark:bg-slate-800/80 glass-panel shadow-soft dark:shadow-softDark rounded-3xl p-4 md:p-5 mb-8 flex flex-col sm:flex-row gap-4 items-center justify-between border border-slate-100 dark:border-slate-700/50"
       >
-        <div class="flex gap-2">
+        <div
+          class="flex flex-col sm:flex-row gap-4 w-full sm:w-auto items-center"
+        >
           <button
             @click="startNewGame()"
-            class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded shadow transition"
+            class="w-full sm:w-auto bg-rose-500 hover:bg-rose-600 text-white font-semibold py-2.5 px-6 rounded-2xl shadow-sm hover:shadow-md transition-all active:scale-95 flex items-center justify-center gap-2"
           >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-5 w-5"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z"
+                clip-rule="evenodd"
+              />
+            </svg>
             Chơi lại
           </button>
 
-          <div class="flex bg-gray-800 rounded shadow-inner p-1">
+          <div
+            class="flex bg-slate-100 dark:bg-slate-900 rounded-xl p-1.5 w-full sm:w-auto shadow-inner"
+          >
             <button
               @click="setMode('pvp')"
-              :class="gameMode === 'pvp' ? 'bg-gray-600 text-white' : 'text-gray-400 hover:text-white'"
-              class="px-3 py-1 rounded transition text-sm"
+              :class="gameMode === 'pvp' ? 'bg-white dark:bg-slate-700 text-slate-800 dark:text-white shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'"
+              class="flex-1 sm:flex-none px-4 py-2 rounded-lg transition-all text-sm font-semibold whitespace-nowrap"
             >
-              Chơi với bạn bè
+              Bạn bè
             </button>
             <button
               @click="setMode('pve')"
-              :class="gameMode === 'pve' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:text-white'"
-              class="px-3 py-1 rounded transition text-sm"
+              :class="gameMode === 'pve' ? 'bg-rose-500 text-white shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'"
+              class="flex-1 sm:flex-none px-4 py-2 rounded-lg transition-all text-sm font-semibold whitespace-nowrap"
             >
-              Chơi với AI
+              Chơi vs AI
             </button>
           </div>
         </div>
 
         <div
-          class="bg-gray-800 px-4 py-2 rounded flex items-center shadow-inner border border-gray-700"
+          class="bg-slate-50 dark:bg-slate-900 px-5 py-2.5 rounded-2xl flex items-center justify-center gap-3 shadow-inner w-full sm:w-auto border border-slate-100 dark:border-slate-800"
         >
-          <span class="font-semibold text-gray-300">Lượt: </span>
-          <span
-            x-text="turn === 'r' ? 'Đỏ' : 'Đen'"
-            :class="turn === 'r' ? 'text-red-500 font-bold ml-2' : 'text-gray-400 font-bold ml-2'"
-          ></span>
+          <span class="text-sm font-medium text-slate-400">Lượt đi:</span>
+          <div class="flex items-center gap-2">
+            <div
+              class="w-3 h-3 rounded-full transition-colors"
+              :class="turn === 'r' ? 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.6)]' : 'bg-slate-800 dark:bg-slate-300'"
+            ></div>
+            <span
+              x-text="turn === 'r' ? 'Đỏ' : 'Đen'"
+              :class="turn === 'r' ? 'text-rose-500' : 'text-slate-800 dark:text-slate-200'"
+              class="font-bold tracking-wide"
+            ></span>
+          </div>
         </div>
       </div>
 
-      <div
-        class="bg-board p-3 rounded-lg shadow-2xl border-4 border-yellow-900 relative"
-      >
+      <div class="flex-1 flex justify-center items-start">
         <div
-          x-show="isThinking"
-          class="absolute inset-0 z-50 bg-black/40 flex items-center justify-center rounded-lg backdrop-blur-sm"
-          style="display: none"
+          class="bg-white dark:bg-slate-800 p-2 sm:p-4 rounded-[2rem] shadow-xl border-b-[6px] border-slate-200 dark:border-slate-950 relative w-full max-w-[530px] mx-auto"
         >
-          <div class="text-white font-bold text-xl animate-pulse">
-            Đang suy nghĩ...
+          <div
+            x-show="isThinking"
+            x-transition.opacity
+            class="absolute inset-0 z-50 bg-white/60 dark:bg-slate-900/60 flex items-center justify-center rounded-[2rem] backdrop-blur-sm"
+            style="display: none"
+          >
+            <div
+              class="bg-white dark:bg-slate-800 px-6 py-4 rounded-2xl shadow-xl flex items-center gap-3 border border-slate-100 dark:border-slate-700"
+            >
+              <svg
+                class="animate-spin h-6 w-6 text-rose-500"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  class="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  stroke-width="4"
+                ></circle>
+                <path
+                  class="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
+              </svg>
+              <span class="text-slate-700 dark:text-slate-200 font-bold text-lg"
+                >AI đang nghĩ...</span
+              >
+            </div>
+          </div>
+
+          <div
+            class="bg-board-light dark:bg-board-dark p-2 sm:p-3 rounded-2xl shadow-inner overflow-hidden border-2 border-[#cfa57c] dark:border-[#6a421b] transition-colors duration-300"
+          >
+            <div id="board" class="w-full aspect-[9/10]"></div>
           </div>
         </div>
-        <div id="board" class="w-[500px] h-[550px]"></div>
       </div>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
-    <script src="./assets/xiangqiboard.js"></script>
+    <script src="https://coup.cotuong.top/assets/xiangqiboard.js"></script>
 
     <script>
       document.addEventListener("alpine:init", () => {
@@ -259,15 +361,33 @@
             i3: "rP",
           },
 
+          // Utility Lấy trạng thái màu hiện tại cho popups
+          getSwalColors() {
+            const isDark = document.documentElement.classList.contains("dark");
+            return {
+              background: isDark ? "#1e293b" : "#ffffff",
+              color: isDark ? "#f1f5f9" : "#0f172a",
+            };
+          },
+
           init() {
             const config = {
               draggable: true,
               position: this.startPosition,
               onDragStart: this.onDragStart.bind(this),
               onDrop: this.onDrop.bind(this),
-              pieceTheme: "assets/images/pieces/{piece}.svg",
+              pieceTheme:
+                "https://coup.cotuong.top/assets/images/pieces/{piece}.svg",
             };
             this.board = Xiangqiboard("board", config);
+
+            // Xử lý Responsive khi xoay màn hình điện thoại hoặc thu phóng
+            window.addEventListener("resize", () => {
+              if (this.board) {
+                this.board.resize();
+              }
+            });
+
             this.startNewGame();
           },
 
@@ -283,17 +403,24 @@
             this.shufflePieces();
             this.board.position(this.startPosition);
 
+            setTimeout(() => {
+              this.board.resize();
+            }, 100);
+
+            const colors = this.getSwalColors();
             Swal.fire({
               title: "Trò chơi bắt đầu",
               text:
                 this.gameMode === "pve"
-                  ? "Bạn là đỏ. AI là đen."
-                  : "Người chơi vs Người chơi",
+                  ? "Bạn cầm quân Đỏ. Chúc may mắn!"
+                  : "Chế độ 2 người chơi",
               icon: "info",
-              background: "#1f2937",
-              color: "#fff",
+              background: colors.background,
+              color: colors.color,
               timer: 1500,
               showConfirmButton: false,
+              toast: true,
+              position: "top",
             });
           },
 
@@ -332,7 +459,6 @@
               "bP",
               "bP",
             ];
-
             const shuffle = (array) => array.sort(() => Math.random() - 0.5);
 
             const shuffledRed = shuffle(redPool);
@@ -495,14 +621,12 @@
           },
 
           processMove(source, target, piece, boardState, updateUI = false) {
-            // Kiểm tra không ăn quân cùng màu
             let targetPiece = boardState[target];
             if (targetPiece && targetPiece[0] === piece[0]) {
               return false;
             }
 
             let isHidden = piece[1] === "X";
-
             let fakeType = this.originalSquares[source]
               ? piece[0] + this.originalSquares[source][1]
               : piece[0] + "P";
@@ -530,7 +654,9 @@
               (k) => simulatedState[k] === enemyColor + "K",
             );
 
-            // Kiểm tra tự chiếu / để tướng đối mặt
+            const colors = this.getSwalColors();
+
+            // Kiểm tra tự chiếu / 2 tướng đối mặt
             if (
               enemyKingSq &&
               !this.isBoardStateValid(piece[0], simulatedState)
@@ -538,18 +664,20 @@
               if (updateUI) {
                 Swal.fire({
                   title: "Nước đi không hợp lệ",
-                  text: "Bạn không thể tự chiếu tướng hoặc để 2 Tướng đối mặt nhau!",
+                  text: "Không thể tự chiếu hoặc để Tướng đối mặt!",
                   icon: "warning",
                   toast: true,
                   position: "top",
                   timer: 2000,
                   showConfirmButton: false,
+                  background: colors.background,
+                  color: colors.color,
                 });
               }
               return false;
             }
 
-            // Kiểm tra luật cấm chiếu quá 3 lần liên tục
+            // Kiểm tra luật cấm chiếu quá 3 lần
             let isCheckingEnemy = !this.isBoardStateValid(
               enemyColor,
               simulatedState,
@@ -558,19 +686,20 @@
               if (updateUI) {
                 Swal.fire({
                   title: "Lỗi luật chơi",
-                  text: "Bạn không được chiếu tướng liên tục quá 3 lần!",
+                  text: "Không được chiếu tướng liên tục quá 3 lần!",
                   icon: "error",
                   toast: true,
                   position: "top",
                   timer: 3000,
                   showConfirmButton: false,
+                  background: colors.background,
+                  color: colors.color,
                 });
               }
               return false;
             }
 
             if (updateUI) {
-              // Cập nhật bộ đếm chiếu
               if (isCheckingEnemy) {
                 this.checkCount[piece[0]]++;
               } else {
@@ -647,17 +776,12 @@
               if (dx !== 0 && dy !== 0) return false;
               return countPiecesBetween() === 0;
             }
-
             if (type === "c") {
               if (dx !== 0 && dy !== 0) return false;
               let piecesBetween = countPiecesBetween();
-              if (boardState[target]) {
-                return piecesBetween === 1;
-              } else {
-                return piecesBetween === 0;
-              }
+              if (boardState[target]) return piecesBetween === 1;
+              return piecesBetween === 0;
             }
-
             if (type === "n") {
               if (!((dx === 1 && dy === 2) || (dx === 2 && dy === 1)))
                 return false;
@@ -670,20 +794,17 @@
               }
               return true;
             }
-
             if (type === "b") {
               if (dx !== 2 || dy !== 2) return false;
               let eyeX = x1 + (x2 > x1 ? 1 : -1);
               let eyeY = y1 + (y2 > y1 ? 1 : -1);
               if (boardState[reverseFileMap[eyeX] + eyeY]) return false;
-
               if (!isRevealed) {
                 if (color === "r" && y2 > 4) return false;
                 if (color === "b" && y2 < 5) return false;
               }
               return true;
             }
-
             if (type === "a") {
               if (dx !== 1 || dy !== 1) return false;
               if (!isRevealed) {
@@ -693,7 +814,6 @@
               }
               return true;
             }
-
             if (type === "k") {
               if (dx + dy !== 1) return false;
               if (x2 < 3 || x2 > 5) return false;
@@ -701,7 +821,6 @@
               if (color === "b" && y2 < 7) return false;
               return true;
             }
-
             if (type === "p") {
               let forwardDir = color === "r" ? 1 : -1;
               let hasCrossedRiver = color === "r" ? y1 >= 5 : y1 <= 4;
@@ -715,7 +834,6 @@
                 return dx === 0 && y2 - y1 === forwardDir;
               }
             }
-
             return false;
           },
 
@@ -851,14 +969,13 @@
             const allSquares = [];
             files.forEach((f) => ranks.forEach((r) => allSquares.push(f + r)));
 
-            const mySquares = Object.keys(boardState).filter((sq) => {
-              return boardState[sq][0] === color;
-            });
+            const mySquares = Object.keys(boardState).filter(
+              (sq) => boardState[sq][0] === color,
+            );
 
             mySquares.forEach((fromSq) => {
               let piece = boardState[fromSq];
               let isHidden = piece[1] === "X";
-
               let fakeType = this.originalSquares[fromSq]
                 ? piece[0] + this.originalSquares[fromSq][1]
                 : piece[0] + "P";
@@ -900,7 +1017,6 @@
                     !enemyKingSq ||
                     this.isBoardStateValid(color, simulatedState)
                   ) {
-                    // Kiểm tra AI không bị vi phạm 3 lần chiếu liên tiếp
                     let isCheckingEnemy = !this.isBoardStateValid(
                       enemyColor,
                       simulatedState,
@@ -934,15 +1050,20 @@
           },
 
           showGameOverNotification(winner, reason) {
+            const colors = this.getSwalColors();
             Swal.fire({
-              title: "Trò chơi kết thúc!",
-              html: `<span class='text-lg'>Phe <b class='${winner === "Đỏ" ? "text-red-500" : "text-gray-400"}'>${winner}</b> đã giành chiến thắng!</span><br/><br/><span class='text-sm text-gray-400'>Lý do: ${reason}</span>`,
+              title: "🎉 Kết thúc trận đấu!",
+              html: `<div class='mt-2'><span class='text-lg font-medium'>Phe <b class='${winner === "Đỏ" ? "text-rose-500" : "text-slate-500 dark:text-slate-300"}'>${winner}</b> đã giành chiến thắng!</span><br/><br/><span class='text-sm text-slate-500 dark:text-slate-400'>Lý do: ${reason}</span></div>`,
               icon: "success",
-              background: "#1f2937",
-              color: "#fff",
-              confirmButtonColor: "#dc2626",
-              confirmButtonText: "Chơi lại",
+              background: colors.background,
+              color: colors.color,
+              confirmButtonColor: "#f43f5e",
+              confirmButtonText: "Chơi lại ngay",
               allowOutsideClick: false,
+              customClass: {
+                popup: "rounded-3xl",
+                confirmButton: "rounded-xl px-6 py-3 font-semibold",
+              },
             }).then(() => {
               this.startNewGame();
             });
