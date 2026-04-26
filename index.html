@@ -102,15 +102,51 @@
         -webkit-backdrop-filter: blur(12px);
       }
 
-      /* Cải thiện CSS cho Click-to-move */
+      /* CSS cho Click-to-move */
       .square-2b8ce {
-        cursor: pointer; /* Đổi con trỏ thành bàn tay khi trỏ vào ô cờ */
+        cursor: pointer;
       }
-      /* Ghi đè màu highlight vàng mặc định của thư viện sang màu Hồng Tone-Sur-Tone */
       .highlight1-e13fc {
-        box-shadow: inset 0 0 0 4px rgba(244, 63, 94, 0.8) !important; /* Tailwind rose-500 */
+        box-shadow: inset 0 0 0 4px rgba(244, 63, 94, 0.8) !important;
         border-radius: 4px;
       }
+
+      /* --- [THÊM MỚI] CSS cho hiệu ứng hiển thị nước đi khả thi --- */
+      .valid-move-dot {
+        position: relative;
+      }
+      .valid-move-dot::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 25%;
+        height: 25%;
+        border-radius: 50%;
+        background-color: rgba(244, 63, 94, 0.85); /* Tone màu Rose */
+        pointer-events: none; /* Tránh chặn sự kiện click */
+        z-index: 10;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      }
+      .valid-move-capture {
+        position: relative;
+      }
+      .valid-move-capture::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        border: 4px solid rgba(244, 63, 94, 0.9);
+        border-radius: 50%;
+        pointer-events: none;
+        z-index: 10;
+        transform: scale(0.9); /* Thu nhỏ vòng ngắm một chút ôm lấy quân cờ */
+        box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.3);
+      }
+      /* --- KẾT THÚC CSS --- */
     </style>
   </head>
   <body
@@ -300,7 +336,6 @@
           isThinking: false,
           checkCount: { r: 0, b: 0 },
 
-          // Trạng thái theo dõi Click-to-Move
           selectedSquare: null,
 
           startPosition: {
@@ -383,14 +418,13 @@
 
           init() {
             const config = {
-              draggable: false, // [QUAN TRỌNG] Tắt chế độ kéo thả của thư viện
+              draggable: false,
               position: this.startPosition,
               pieceTheme:
                 "https://coup.cotuong.top/assets/images/pieces/{piece}.svg",
             };
             this.board = Xiangqiboard("board", config);
 
-            // [THÊM MỚI] Lắng nghe sự kiện click/tap lên các ô cờ
             $("#board").on("click", ".square-2b8ce", (e) => {
               const square = $(e.currentTarget).attr("data-square");
               this.handleSquareClick(square);
@@ -405,43 +439,37 @@
             this.startNewGame();
           },
 
-          // [THÊM MỚI] Logic xử lý khi click vào ô cờ
           handleSquareClick(square) {
-            // Chặn tương tác nếu AI đang nghĩ hoặc chưa tới lượt
             if (this.isThinking) return;
             if (this.gameMode === "pve" && this.turn === "b") return;
 
             const pos = this.board.position();
             const piece = pos[square];
 
-            // 1. Nếu chưa có quân cờ nào được chọn trước đó
             if (!this.selectedSquare) {
-              // Chỉ chọn nếu ô đó có quân cờ và thuộc về người đang tới lượt
               if (piece && piece[0] === this.turn) {
                 this.selectedSquare = square;
                 this.highlightSquare(square);
+                this.showValidMoves(square); // [THÊM MỚI] Tính toán các ô hợp lệ
               }
               return;
             }
 
-            // 2. Nếu đã có 1 quân cờ đang được chọn sẵn
             const source = this.selectedSquare;
 
-            // Bấm lại vào chính nó -> Hủy chọn
             if (source === square) {
               this.selectedSquare = null;
               this.clearHighlights();
               return;
             }
 
-            // Bấm vào 1 quân cờ khác CÙNG PHE -> Chuyển hướng lựa chọn
             if (piece && piece[0] === this.turn) {
               this.selectedSquare = square;
               this.highlightSquare(square);
+              this.showValidMoves(square); // [THÊM MỚI] Thay đổi tính toán sang ô mới
               return;
             }
 
-            // Bấm vào ô trống hoặc quân ĐỐI PHƯƠNG -> Cố gắng di chuyển
             const sourcePiece = pos[source];
             let validMove = this.processMove(
               source,
@@ -452,37 +480,62 @@
             );
 
             if (validMove) {
-              // Yêu cầu thư viện di chuyển quân cờ mượt mà
               this.board.move(`${source}-${square}`);
-
-              // Xóa trạng thái chọn
               this.selectedSquare = null;
               this.clearHighlights();
 
-              // Chuyển lượt và kiểm tra điều kiện kết thúc
               this.turn = this.turn === "r" ? "b" : "r";
               if (this.checkWinCondition(this.board.position())) return;
 
-              // Kích hoạt AI nếu cần
               if (this.gameMode === "pve" && this.turn === "b") {
                 this.isThinking = true;
                 setTimeout(() => this.makeComputerMove(), 50);
               }
             } else {
-              // Nước đi không hợp lệ -> Hủy chọn
               this.selectedSquare = null;
               this.clearHighlights();
             }
           },
 
-          // [THÊM MỚI] Hàm dọn dẹp viền highlight
+          // [THÊM MỚI] Quét và hiển thị các điểm đi hợp lệ
+          showValidMoves(source) {
+            const boardState = this.board.position();
+            const piece = boardState[source];
+            if (!piece) return;
+
+            const files = ["a", "b", "c", "d", "e", "f", "g", "h", "i"];
+            const ranks = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"];
+
+            ranks.forEach((r) => {
+              files.forEach((f) => {
+                const target = f + r;
+                if (source === target) return;
+
+                // Test "nháp" nước đi bằng cách gửi tham số updateUI = false
+                if (
+                  this.processMove(source, target, piece, boardState, false)
+                ) {
+                  if (boardState[target]) {
+                    // Nếu ở đích có quân địch (Ăn quân)
+                    $(`#board .square-${target}`).addClass(
+                      "valid-move-capture",
+                    );
+                  } else {
+                    // Nếu là ô trống (Di chuyển)
+                    $(`#board .square-${target}`).addClass("valid-move-dot");
+                  }
+                }
+              });
+            });
+          },
+
           clearHighlights() {
+            // [CẬP NHẬT] Xóa luôn cả class của dấu chấm và viền ăn quân
             $("#board .square-2b8ce").removeClass(
-              "highlight1-e13fc highlight2-e0a03",
+              "highlight1-e13fc highlight2-e0a03 valid-move-dot valid-move-capture",
             );
           },
 
-          // [THÊM MỚI] Hàm bôi đậm ô đang được chọn
           highlightSquare(sq) {
             this.clearHighlights();
             $(`#board .square-${sq}`).addClass("highlight1-e13fc");
@@ -498,7 +551,6 @@
             this.isThinking = false;
             this.checkCount = { r: 0, b: 0 };
 
-            // Đặt lại trạng thái khi ván mới bắt đầu
             this.selectedSquare = null;
             this.clearHighlights();
 
@@ -781,7 +833,6 @@
               if (isHidden) {
                 let realPiece = this.hiddenPieces[source];
                 delete this.hiddenPieces[source];
-                // Tăng timeout lên một chút để đợi animation di chuyển kết thúc trước khi lật mặt quân
                 setTimeout(() => {
                   let position = this.board.position();
                   delete position[source];
