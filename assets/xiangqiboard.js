@@ -614,12 +614,12 @@
       !config.hasOwnProperty("pieceTheme") ||
       (!isString(config.pieceTheme) && !isFunction(config.pieceTheme))
     ) {
-      config.pieceTheme = "img/pieces/{piece}.svg";
+      config.pieceTheme = "/assets/images/pieces/{piece}.svg";
     }
 
     // default board theme is wikimedia
     if (!config.hasOwnProperty("boardTheme") || !isString(config.boardTheme)) {
-      config.boardTheme = "img/boards/wood-board.svg";
+      config.boardTheme = "/assets/images/boards/wood-board.svg";
     }
 
     // animation speeds

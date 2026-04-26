@@ -82,8 +82,8 @@
         >
           <span class="font-semibold text-gray-300">Turn: </span>
           <span
-            x-text="turn === 'w' ? 'Red' : 'Black'"
-            :class="turn === 'w' ? 'text-red-500 font-bold ml-2' : 'text-gray-400 font-bold ml-2'"
+            x-text="turn === 'r' ? 'Red' : 'Black'"
+            :class="turn === 'r' ? 'text-red-500 font-bold ml-2' : 'text-gray-400 font-bold ml-2'"
           ></span>
         </div>
       </div>
@@ -111,57 +111,91 @@
       document.addEventListener("alpine:init", () => {
         Alpine.data("xiangqiGame", () => ({
           board: null,
-          turn: "w",
+          turn: "r", // Standardized to 'r' for Red and 'b' for Black
           hiddenPieces: {},
-          gameMode: "pve", // Default to AI mode
+          gameMode: "pve",
           isThinking: false,
 
-          startFen:
-            "xxxxkxxxx/9/1x5x1/x1x1x1x1x/9/9/X1X1X1X1X/1X5X1/9/XXXXKXXXX",
+          // Using a strict position dictionary so xiangqiboard directly loads custom 'rX'/'bX' pieces
+          startPosition: {
+            a9: "bX",
+            b9: "bX",
+            c9: "bX",
+            d9: "bX",
+            f9: "bX",
+            g9: "bX",
+            h9: "bX",
+            i9: "bX",
+            e9: "bK",
+            b7: "bX",
+            h7: "bX",
+            a6: "bX",
+            c6: "bX",
+            e6: "bX",
+            g6: "bX",
+            i6: "bX",
 
-          // Base pieces mapped to original squares for Fake Move logic
+            a0: "rX",
+            b0: "rX",
+            c0: "rX",
+            d0: "rX",
+            f0: "rX",
+            g0: "rX",
+            h0: "rX",
+            i0: "rX",
+            e0: "rK",
+            b2: "rX",
+            h2: "rX",
+            a3: "rX",
+            c3: "rX",
+            e3: "rX",
+            g3: "rX",
+            i3: "rX",
+          },
+
           originalSquares: {
-            a9: "r",
-            b9: "n",
-            c9: "b",
-            d9: "a",
-            e9: "k",
-            f9: "a",
-            g9: "b",
-            h9: "n",
-            i9: "r",
-            b7: "c",
-            h7: "c",
-            a6: "p",
-            c6: "p",
-            e6: "p",
-            g6: "p",
-            i6: "p",
-            a0: "R",
-            b0: "N",
-            c0: "B",
-            d0: "A",
-            e0: "K",
-            f0: "A",
-            g0: "B",
-            h0: "N",
-            i0: "R",
-            b2: "C",
-            h2: "C",
-            a3: "P",
-            c3: "P",
-            e3: "P",
-            g3: "P",
-            i3: "P",
+            a9: "bR",
+            b9: "bN",
+            c9: "bB",
+            d9: "bA",
+            e9: "bK",
+            f9: "bA",
+            g9: "bB",
+            h9: "bN",
+            i9: "bR",
+            b7: "bC",
+            h7: "bC",
+            a6: "bP",
+            c6: "bP",
+            e6: "bP",
+            g6: "bP",
+            i6: "bP",
+            a0: "rR",
+            b0: "rN",
+            c0: "rB",
+            d0: "rA",
+            e0: "rK",
+            f0: "rA",
+            g0: "rB",
+            h0: "rN",
+            i0: "rR",
+            b2: "rC",
+            h2: "rC",
+            a3: "rP",
+            c3: "rP",
+            e3: "rP",
+            g3: "rP",
+            i3: "rP",
           },
 
           init() {
             const config = {
               draggable: true,
-              position: this.startFen,
+              position: this.startPosition,
               onDragStart: this.onDragStart.bind(this),
               onDrop: this.onDrop.bind(this),
-              pieceTheme: "/img/pieces/{piece}.png",
+              // This format directly loads your rR.svg, rX.svg, bK.svg files
+              pieceTheme: "assets/images/pieces/{piece}.svg",
             };
             this.board = Xiangqiboard("board", config);
             this.startNewGame();
@@ -173,10 +207,10 @@
           },
 
           startNewGame() {
-            this.turn = "w";
+            this.turn = "r";
             this.isThinking = false;
             this.shufflePieces();
-            this.board.position(this.startFen);
+            this.board.position(this.startPosition);
 
             Swal.fire({
               title: "Game Started",
@@ -194,39 +228,40 @@
 
           shufflePieces() {
             const redPool = [
-              "A",
-              "A",
-              "B",
-              "B",
-              "N",
-              "N",
-              "R",
-              "R",
-              "C",
-              "C",
-              "P",
-              "P",
-              "P",
-              "P",
-              "P",
+              "rA",
+              "rA",
+              "rB",
+              "rB",
+              "rN",
+              "rN",
+              "rR",
+              "rR",
+              "rC",
+              "rC",
+              "rP",
+              "rP",
+              "rP",
+              "rP",
+              "rP",
             ];
             const blackPool = [
-              "a",
-              "a",
-              "b",
-              "b",
-              "n",
-              "n",
-              "r",
-              "r",
-              "c",
-              "c",
-              "p",
-              "p",
-              "p",
-              "p",
-              "p",
+              "bA",
+              "bA",
+              "bB",
+              "bB",
+              "bN",
+              "bN",
+              "bR",
+              "bR",
+              "bC",
+              "bC",
+              "bP",
+              "bP",
+              "bP",
+              "bP",
+              "bP",
             ];
+
             const shuffle = (array) => array.sort(() => Math.random() - 0.5);
 
             const shuffledRed = shuffle(redPool);
@@ -278,12 +313,10 @@
 
           onDragStart(source, piece) {
             if (this.gameMode === "pve" && this.turn === "b") return false;
-            if (
-              (this.turn === "w" && piece.search(/^[a-z]/) !== -1) ||
-              (this.turn === "b" && piece.search(/^[A-Z]/) !== -1)
-            )
-              return false;
-            if (piece.search(/^X|^x/) !== -1) return true;
+
+            // Prevent picking up enemy pieces (piece[0] is 'r' or 'b')
+            if (this.turn !== piece[0]) return false;
+            return true;
           },
 
           onDrop(source, target, piece, newPos, oldPos) {
@@ -298,22 +331,21 @@
             );
             if (!validMove) return "snapback";
 
-            this.turn = this.turn === "w" ? "b" : "w";
+            this.turn = this.turn === "r" ? "b" : "r";
 
             if (this.checkWinCondition(this.board.position())) return;
 
             if (this.gameMode === "pve" && this.turn === "b") {
               this.isThinking = true;
-              // Yield to browser UI thread before running heavy AI
               setTimeout(() => this.makeComputerMove(), 50);
             }
           },
 
           processMove(source, target, piece, boardState, updateUI = false) {
-            let isHidden = piece === "X" || piece === "x";
+            let isHidden = piece[1] === "X"; // Detects "rX" or "bX"
             let validMove = isHidden
               ? this.validateGeometry(
-                  this.originalSquares[source] || "P",
+                  this.originalSquares[source] || piece[0] + "P",
                   source,
                   target,
                 )
@@ -334,10 +366,7 @@
             return validMove;
           },
 
-          // --- Simplified Geometry Validator ---
           validateGeometry(pieceType, source, target) {
-            // Note: Simplified for performance and copy-pasteability.
-            // True Xiangqi requires checking for blocking pieces (hobbling) and palace bounds.
             const fileMap = {
               a: 0,
               b: 1,
@@ -355,19 +384,20 @@
               y2 = parseInt(target[1]);
             let dx = Math.abs(x2 - x1);
             let dy = Math.abs(y2 - y1);
-            let type = pieceType.toLowerCase();
+
+            // Grabs the exact piece type letter (e.g. "R" from "rR")
+            let type = pieceType[1].toLowerCase();
 
             if (type === "r" || type === "c") return dx === 0 || dy === 0;
             if (type === "n")
               return (dx === 1 && dy === 2) || (dx === 2 && dy === 1);
             if (type === "b") return dx === 2 && dy === 2;
             if (type === "a") return dx === 1 && dy === 1;
-            if (type === "k") return dx + dy === 1; // 1 orthogonal step
-            if (type === "p") return dx + dy === 1; // Simplified pawn
+            if (type === "k") return dx + dy === 1;
+            if (type === "p") return dx + dy === 1;
             return false;
           },
 
-          // --- Minimax AI Engine ---
           makeComputerMove() {
             const SEARCH_DEPTH = 3;
             const boardState = this.board.position();
@@ -406,19 +436,17 @@
               true,
             );
 
-            this.turn = "w";
+            this.turn = "r";
             this.isThinking = false;
             this.checkWinCondition(this.board.position());
           },
 
           minimax(boardState, depth, alpha, beta, isMaximizingPlayer) {
-            let kings = Object.values(boardState).filter(
-              (p) => p.toLowerCase() === "k",
-            );
+            let kings = Object.values(boardState).filter((p) => p[1] === "K");
             if (depth === 0 || kings.length < 2)
               return this.evaluateBoard(boardState);
 
-            let currentColor = isMaximizingPlayer ? "b" : "w";
+            let currentColor = isMaximizingPlayer ? "b" : "r";
             let possibleMoves = this.generateLegalMoves(
               currentColor,
               boardState,
@@ -469,23 +497,24 @@
           },
 
           evaluateBoard(boardState) {
+            // Re-mapped piece values matching 2-character identifiers
             const PIECE_VALUES = {
-              k: 10000,
-              r: 900,
-              c: 450,
-              n: 400,
-              b: 200,
-              a: 200,
-              p: 100,
-              x: 300,
-              K: -10000,
-              R: -900,
-              C: -450,
-              N: -400,
-              B: -200,
-              A: -200,
-              P: -100,
-              X: -300,
+              bK: 10000,
+              bR: 900,
+              bC: 450,
+              bN: 400,
+              bB: 200,
+              bA: 200,
+              bP: 100,
+              bX: 300,
+              rK: -10000,
+              rR: -900,
+              rC: -450,
+              rN: -400,
+              rB: -200,
+              rA: -200,
+              rP: -100,
+              rX: -300,
             };
             let score = 0;
             for (let sq in boardState) {
@@ -502,30 +531,24 @@
             files.forEach((f) => ranks.forEach((r) => allSquares.push(f + r)));
 
             const mySquares = Object.keys(boardState).filter((sq) => {
-              let p = boardState[sq];
-              return color === "b"
-                ? p.match(/^[a-z]$/) || p === "x"
-                : p.match(/^[A-Z]$/) || p === "X";
+              return boardState[sq][0] === color; // 'r' or 'b'
             });
 
             mySquares.forEach((fromSq) => {
               let piece = boardState[fromSq];
-              let isHidden = piece === "X" || piece === "x";
+              let isHidden = piece[1] === "X";
 
               allSquares.forEach((toSq) => {
                 if (fromSq === toSq) return;
+
                 let targetPiece = boardState[toSq];
-                if (targetPiece) {
-                  let isOwn =
-                    color === "b"
-                      ? targetPiece.match(/^[a-z]$/) || targetPiece === "x"
-                      : targetPiece.match(/^[A-Z]$/) || targetPiece === "X";
-                  if (isOwn) return;
-                }
+
+                // Block moving to a square containing our own piece
+                if (targetPiece && targetPiece[0] === color) return;
 
                 let isValid = isHidden
                   ? this.validateGeometry(
-                      this.originalSquares[fromSq] || "P",
+                      this.originalSquares[fromSq] || color + "P",
                       fromSq,
                       toSq,
                     )
@@ -535,16 +558,13 @@
                   moves.push({ from: fromSq, to: toSq, piece: piece });
               });
             });
-            // Shuffle moves slightly so AI isn't completely predictable on tied scores
             return moves.sort(() => Math.random() - 0.5);
           },
 
           checkWinCondition(boardState) {
-            let kings = Object.values(boardState).filter(
-              (p) => p.toLowerCase() === "k",
-            );
+            let kings = Object.values(boardState).filter((p) => p[1] === "K");
             if (kings.length < 2) {
-              let winner = kings[0] === "K" ? "Red" : "Black";
+              let winner = kings[0] === "rK" ? "Red" : "Black";
               Swal.fire({
                 title: "Game Over!",
                 text: `${winner} wins the game!`,
