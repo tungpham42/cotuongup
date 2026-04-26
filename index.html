@@ -1,0 +1,567 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dark Xiangqi (Cờ Úp) - AI Edition</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: { board: "#a1662f" },
+          },
+        },
+      };
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/@chrisoakman/xiangqiboard@0.3.3/dist/xiangqiboard.css"
+    />
+
+    <script
+      defer
+      src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"
+    ></script>
+
+    <style>
+      .hidden-piece {
+        filter: brightness(0.5) contrast(1.2);
+      }
+      /* Prevent selection highlighting on the board */
+      #board {
+        user-select: none;
+        -webkit-user-select: none;
+      }
+    </style>
+  </head>
+  <body
+    class="bg-gray-900 text-gray-100 min-h-screen flex items-center justify-center font-sans"
+  >
+    <div
+      x-data="xiangqiGame()"
+      class="container mx-auto px-4 max-w-4xl py-8 flex flex-col items-center"
+    >
+      <div class="text-center mb-6">
+        <h1 class="text-4xl font-bold text-red-500 mb-2">Cờ Úp vs AI</h1>
+        <p class="text-gray-400">Minimax Engine with Alpha-Beta Pruning</p>
+      </div>
+
+      <div
+        class="flex flex-wrap gap-4 mb-6 items-center w-[500px] justify-between"
+      >
+        <div class="flex gap-2">
+          <button
+            @click="startNewGame()"
+            class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded shadow transition"
+          >
+            Restart
+          </button>
+
+          <div class="flex bg-gray-800 rounded shadow-inner p-1">
+            <button
+              @click="setMode('pvp')"
+              :class="gameMode === 'pvp' ? 'bg-gray-600 text-white' : 'text-gray-400 hover:text-white'"
+              class="px-3 py-1 rounded transition text-sm"
+            >
+              PvP
+            </button>
+            <button
+              @click="setMode('pve')"
+              :class="gameMode === 'pve' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:text-white'"
+              class="px-3 py-1 rounded transition text-sm"
+            >
+              Play AI
+            </button>
+          </div>
+        </div>
+
+        <div
+          class="bg-gray-800 px-4 py-2 rounded flex items-center shadow-inner border border-gray-700"
+        >
+          <span class="font-semibold text-gray-300">Turn: </span>
+          <span
+            x-text="turn === 'w' ? 'Red' : 'Black'"
+            :class="turn === 'w' ? 'text-red-500 font-bold ml-2' : 'text-gray-400 font-bold ml-2'"
+          ></span>
+        </div>
+      </div>
+
+      <div
+        class="bg-board p-3 rounded-lg shadow-2xl border-4 border-yellow-900 relative"
+      >
+        <div
+          x-show="isThinking"
+          class="absolute inset-0 z-50 bg-black/40 flex items-center justify-center rounded-lg backdrop-blur-sm"
+          style="display: none"
+        >
+          <div class="text-white font-bold text-xl animate-pulse">
+            AI is thinking...
+          </div>
+        </div>
+        <div id="board" class="w-[500px] h-[550px]"></div>
+      </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://unpkg.com/@chrisoakman/xiangqiboard@0.3.3/dist/xiangqiboard.js"></script>
+
+    <script>
+      document.addEventListener("alpine:init", () => {
+        Alpine.data("xiangqiGame", () => ({
+          board: null,
+          turn: "w",
+          hiddenPieces: {},
+          gameMode: "pve", // Default to AI mode
+          isThinking: false,
+
+          startFen:
+            "xxxxkxxxx/9/1x5x1/x1x1x1x1x/9/9/X1X1X1X1X/1X5X1/9/XXXXKXXXX",
+
+          // Base pieces mapped to original squares for Fake Move logic
+          originalSquares: {
+            a9: "r",
+            b9: "n",
+            c9: "b",
+            d9: "a",
+            e9: "k",
+            f9: "a",
+            g9: "b",
+            h9: "n",
+            i9: "r",
+            b7: "c",
+            h7: "c",
+            a6: "p",
+            c6: "p",
+            e6: "p",
+            g6: "p",
+            i6: "p",
+            a0: "R",
+            b0: "N",
+            c0: "B",
+            d0: "A",
+            e0: "K",
+            f0: "A",
+            g0: "B",
+            h0: "N",
+            i0: "R",
+            b2: "C",
+            h2: "C",
+            a3: "P",
+            c3: "P",
+            e3: "P",
+            g3: "P",
+            i3: "P",
+          },
+
+          init() {
+            const config = {
+              draggable: true,
+              position: this.startFen,
+              onDragStart: this.onDragStart.bind(this),
+              onDrop: this.onDrop.bind(this),
+              pieceTheme: "/img/pieces/{piece}.png",
+            };
+            this.board = Xiangqiboard("board", config);
+            this.startNewGame();
+          },
+
+          setMode(mode) {
+            this.gameMode = mode;
+            this.startNewGame();
+          },
+
+          startNewGame() {
+            this.turn = "w";
+            this.isThinking = false;
+            this.shufflePieces();
+            this.board.position(this.startFen);
+
+            Swal.fire({
+              title: "Game Started",
+              text:
+                this.gameMode === "pve"
+                  ? "You are Red. AI is Black."
+                  : "Player vs Player",
+              icon: "info",
+              background: "#1f2937",
+              color: "#fff",
+              timer: 1500,
+              showConfirmButton: false,
+            });
+          },
+
+          shufflePieces() {
+            const redPool = [
+              "A",
+              "A",
+              "B",
+              "B",
+              "N",
+              "N",
+              "R",
+              "R",
+              "C",
+              "C",
+              "P",
+              "P",
+              "P",
+              "P",
+              "P",
+            ];
+            const blackPool = [
+              "a",
+              "a",
+              "b",
+              "b",
+              "n",
+              "n",
+              "r",
+              "r",
+              "c",
+              "c",
+              "p",
+              "p",
+              "p",
+              "p",
+              "p",
+            ];
+            const shuffle = (array) => array.sort(() => Math.random() - 0.5);
+
+            const shuffledRed = shuffle(redPool);
+            const shuffledBlack = shuffle(blackPool);
+
+            const blackSquares = [
+              "a9",
+              "b9",
+              "c9",
+              "d9",
+              "f9",
+              "g9",
+              "h9",
+              "i9",
+              "b7",
+              "h7",
+              "a6",
+              "c6",
+              "e6",
+              "g6",
+              "i6",
+            ];
+            const redSquares = [
+              "a0",
+              "b0",
+              "c0",
+              "d0",
+              "f0",
+              "g0",
+              "h0",
+              "i0",
+              "b2",
+              "h2",
+              "a3",
+              "c3",
+              "e3",
+              "g3",
+              "i3",
+            ];
+
+            this.hiddenPieces = {};
+            blackSquares.forEach((sq, i) => {
+              this.hiddenPieces[sq] = shuffledBlack[i];
+            });
+            redSquares.forEach((sq, i) => {
+              this.hiddenPieces[sq] = shuffledRed[i];
+            });
+          },
+
+          onDragStart(source, piece) {
+            if (this.gameMode === "pve" && this.turn === "b") return false;
+            if (
+              (this.turn === "w" && piece.search(/^[a-z]/) !== -1) ||
+              (this.turn === "b" && piece.search(/^[A-Z]/) !== -1)
+            )
+              return false;
+            if (piece.search(/^X|^x/) !== -1) return true;
+          },
+
+          onDrop(source, target, piece, newPos, oldPos) {
+            if (source === target) return "snapback";
+
+            let validMove = this.processMove(
+              source,
+              target,
+              piece,
+              oldPos,
+              true,
+            );
+            if (!validMove) return "snapback";
+
+            this.turn = this.turn === "w" ? "b" : "w";
+
+            if (this.checkWinCondition(this.board.position())) return;
+
+            if (this.gameMode === "pve" && this.turn === "b") {
+              this.isThinking = true;
+              // Yield to browser UI thread before running heavy AI
+              setTimeout(() => this.makeComputerMove(), 50);
+            }
+          },
+
+          processMove(source, target, piece, boardState, updateUI = false) {
+            let isHidden = piece === "X" || piece === "x";
+            let validMove = isHidden
+              ? this.validateGeometry(
+                  this.originalSquares[source] || "P",
+                  source,
+                  target,
+                )
+              : this.validateGeometry(piece, source, target);
+
+            if (validMove && updateUI) {
+              if (isHidden) {
+                let realPiece = this.hiddenPieces[source];
+                delete this.hiddenPieces[source];
+                setTimeout(() => {
+                  let position = this.board.position();
+                  delete position[source];
+                  position[target] = realPiece;
+                  this.board.position(position, false);
+                }, 150);
+              }
+            }
+            return validMove;
+          },
+
+          // --- Simplified Geometry Validator ---
+          validateGeometry(pieceType, source, target) {
+            // Note: Simplified for performance and copy-pasteability.
+            // True Xiangqi requires checking for blocking pieces (hobbling) and palace bounds.
+            const fileMap = {
+              a: 0,
+              b: 1,
+              c: 2,
+              d: 3,
+              e: 4,
+              f: 5,
+              g: 6,
+              h: 7,
+              i: 8,
+            };
+            let x1 = fileMap[source[0]],
+              y1 = parseInt(source[1]);
+            let x2 = fileMap[target[0]],
+              y2 = parseInt(target[1]);
+            let dx = Math.abs(x2 - x1);
+            let dy = Math.abs(y2 - y1);
+            let type = pieceType.toLowerCase();
+
+            if (type === "r" || type === "c") return dx === 0 || dy === 0;
+            if (type === "n")
+              return (dx === 1 && dy === 2) || (dx === 2 && dy === 1);
+            if (type === "b") return dx === 2 && dy === 2;
+            if (type === "a") return dx === 1 && dy === 1;
+            if (type === "k") return dx + dy === 1; // 1 orthogonal step
+            if (type === "p") return dx + dy === 1; // Simplified pawn
+            return false;
+          },
+
+          // --- Minimax AI Engine ---
+          makeComputerMove() {
+            const SEARCH_DEPTH = 3;
+            const boardState = this.board.position();
+            const possibleMoves = this.generateLegalMoves("b", boardState);
+
+            if (possibleMoves.length === 0) {
+              this.isThinking = false;
+              return;
+            }
+
+            let bestScore = -Infinity;
+            let bestMove = possibleMoves[0];
+
+            for (let move of possibleMoves) {
+              let nextState = this.simulateMove(boardState, move);
+              let score = this.minimax(
+                nextState,
+                SEARCH_DEPTH - 1,
+                -Infinity,
+                Infinity,
+                false,
+              );
+
+              if (score > bestScore) {
+                bestScore = score;
+                bestMove = move;
+              }
+            }
+
+            this.board.move(`${bestMove.from}-${bestMove.to}`);
+            this.processMove(
+              bestMove.from,
+              bestMove.to,
+              bestMove.piece,
+              boardState,
+              true,
+            );
+
+            this.turn = "w";
+            this.isThinking = false;
+            this.checkWinCondition(this.board.position());
+          },
+
+          minimax(boardState, depth, alpha, beta, isMaximizingPlayer) {
+            let kings = Object.values(boardState).filter(
+              (p) => p.toLowerCase() === "k",
+            );
+            if (depth === 0 || kings.length < 2)
+              return this.evaluateBoard(boardState);
+
+            let currentColor = isMaximizingPlayer ? "b" : "w";
+            let possibleMoves = this.generateLegalMoves(
+              currentColor,
+              boardState,
+            );
+            if (possibleMoves.length === 0)
+              return isMaximizingPlayer ? -9999 : 9999;
+
+            if (isMaximizingPlayer) {
+              let maxEval = -Infinity;
+              for (let move of possibleMoves) {
+                let nextState = this.simulateMove(boardState, move);
+                let evaluation = this.minimax(
+                  nextState,
+                  depth - 1,
+                  alpha,
+                  beta,
+                  false,
+                );
+                maxEval = Math.max(maxEval, evaluation);
+                alpha = Math.max(alpha, evaluation);
+                if (beta <= alpha) break;
+              }
+              return maxEval;
+            } else {
+              let minEval = Infinity;
+              for (let move of possibleMoves) {
+                let nextState = this.simulateMove(boardState, move);
+                let evaluation = this.minimax(
+                  nextState,
+                  depth - 1,
+                  alpha,
+                  beta,
+                  true,
+                );
+                minEval = Math.min(minEval, evaluation);
+                beta = Math.min(beta, evaluation);
+                if (beta <= alpha) break;
+              }
+              return minEval;
+            }
+          },
+
+          simulateMove(boardState, move) {
+            let newState = { ...boardState };
+            delete newState[move.from];
+            newState[move.to] = move.piece;
+            return newState;
+          },
+
+          evaluateBoard(boardState) {
+            const PIECE_VALUES = {
+              k: 10000,
+              r: 900,
+              c: 450,
+              n: 400,
+              b: 200,
+              a: 200,
+              p: 100,
+              x: 300,
+              K: -10000,
+              R: -900,
+              C: -450,
+              N: -400,
+              B: -200,
+              A: -200,
+              P: -100,
+              X: -300,
+            };
+            let score = 0;
+            for (let sq in boardState) {
+              score += PIECE_VALUES[boardState[sq]] || 0;
+            }
+            return score;
+          },
+
+          generateLegalMoves(color, boardState) {
+            const moves = [];
+            const files = ["a", "b", "c", "d", "e", "f", "g", "h", "i"];
+            const ranks = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"];
+            const allSquares = [];
+            files.forEach((f) => ranks.forEach((r) => allSquares.push(f + r)));
+
+            const mySquares = Object.keys(boardState).filter((sq) => {
+              let p = boardState[sq];
+              return color === "b"
+                ? p.match(/^[a-z]$/) || p === "x"
+                : p.match(/^[A-Z]$/) || p === "X";
+            });
+
+            mySquares.forEach((fromSq) => {
+              let piece = boardState[fromSq];
+              let isHidden = piece === "X" || piece === "x";
+
+              allSquares.forEach((toSq) => {
+                if (fromSq === toSq) return;
+                let targetPiece = boardState[toSq];
+                if (targetPiece) {
+                  let isOwn =
+                    color === "b"
+                      ? targetPiece.match(/^[a-z]$/) || targetPiece === "x"
+                      : targetPiece.match(/^[A-Z]$/) || targetPiece === "X";
+                  if (isOwn) return;
+                }
+
+                let isValid = isHidden
+                  ? this.validateGeometry(
+                      this.originalSquares[fromSq] || "P",
+                      fromSq,
+                      toSq,
+                    )
+                  : this.validateGeometry(piece, fromSq, toSq);
+
+                if (isValid)
+                  moves.push({ from: fromSq, to: toSq, piece: piece });
+              });
+            });
+            // Shuffle moves slightly so AI isn't completely predictable on tied scores
+            return moves.sort(() => Math.random() - 0.5);
+          },
+
+          checkWinCondition(boardState) {
+            let kings = Object.values(boardState).filter(
+              (p) => p.toLowerCase() === "k",
+            );
+            if (kings.length < 2) {
+              let winner = kings[0] === "K" ? "Red" : "Black";
+              Swal.fire({
+                title: "Game Over!",
+                text: `${winner} wins the game!`,
+                icon: "success",
+                background: "#1f2937",
+                color: "#fff",
+                confirmButtonColor: "#dc2626",
+              }).then(() => this.startNewGame());
+              return true;
+            }
+            return false;
+          },
+        }));
+      });
+    </script>
+  </body>
+</html>
