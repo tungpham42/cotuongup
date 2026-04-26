@@ -123,7 +123,6 @@
       /* --- ĐỔI MÀU BÀN CỜ ĐỘNG QUA CSS MASK --- */
       #board {
         background-image: none !important; /* Xóa hình nền tĩnh mặc định do JS tạo ra */
-        border: none !important; /* Đảm bảo không còn viền dư thừa từ CSS */
       }
 
       #board::before {
@@ -135,11 +134,11 @@
         height: 100%;
         /* Màu nét vẽ Light Mode: Nâu sẫm */
         background-color: rgba(120, 53, 15, 0.85);
-        /* Dùng SVG làm mặt nạ đục lỗ, set contain để không bị mất viền */
+        /* Dùng SVG làm mặt nạ đục lỗ */
         -webkit-mask: url("https://coup.cotuong.top/assets/images/boards/ban-co.svg")
-          no-repeat center / contain;
+          no-repeat center / 100% 100%;
         mask: url("https://coup.cotuong.top/assets/images/boards/ban-co.svg")
-          no-repeat center / contain;
+          no-repeat center / 100% 100%;
         z-index: 0;
         pointer-events: none; /* Tránh chặn thao tác click vào ô cờ */
         transition:
@@ -319,7 +318,7 @@
 
       <div class="flex-1 flex justify-center items-start">
         <div
-          class="bg-white dark:bg-slate-800 p-2 sm:p-4 rounded-[2rem] shadow-xl relative w-full max-w-[530px] mx-auto"
+          class="bg-white dark:bg-slate-800 p-2 sm:p-4 rounded-[2rem] shadow-xl border-b-[6px] border-slate-200 dark:border-slate-950 relative w-full max-w-[530px] mx-auto"
         >
           <div
             x-show="isThinking"
@@ -357,7 +356,7 @@
           </div>
 
           <div
-            class="bg-board-light dark:bg-board-dark p-2 sm:p-3 rounded-2xl shadow-inner overflow-hidden transition-colors duration-300"
+            class="bg-board-light dark:bg-board-dark p-2 sm:p-3 rounded-2xl shadow-inner overflow-hidden border-2 border-[#cfa57c] dark:border-[#6a421b] transition-colors duration-300"
           >
             <div id="board" class="w-full aspect-[9/10]"></div>
           </div>
