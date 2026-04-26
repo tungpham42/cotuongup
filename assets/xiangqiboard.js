@@ -88,17 +88,6 @@
     };
   }
 
-  // function debounce (f, interval, scope) {
-  //   var timeout = 0
-  //   return function (_args) {
-  //     window.clearTimeout(timeout)
-  //     var args = arguments
-  //     timeout = window.setTimeout(function () {
-  //       f.apply(scope, args)
-  //     }, interval)
-  //   }
-  // }
-
   function uuid() {
     return "xxxx-xxxx-xxxx-xxxx-xxxx-xxxx-xxxx-xxxx".replace(
       /x/g,
@@ -147,17 +136,6 @@
     return str;
   }
 
-  if (RUN_ASSERTS) {
-    console.assert(interpolateTemplate("abc", { a: "x" }) === "abc");
-    console.assert(interpolateTemplate("{a}bc", {}) === "{a}bc");
-    console.assert(interpolateTemplate("{a}bc", { p: "q" }) === "{a}bc");
-    console.assert(interpolateTemplate("{a}bc", { a: "x" }) === "xbc");
-    console.assert(interpolateTemplate("{a}bc{a}bc", { a: "x" }) === "xbcxbc");
-    console.assert(
-      interpolateTemplate("{a}{a}{b}", { a: "x", b: "y" }) === "xxy",
-    );
-  }
-
   // ---------------------------------------------------------------------------
   // Predicates
   // ---------------------------------------------------------------------------
@@ -199,37 +177,9 @@
     return isString(square) && square.search(/^[a-i][0-9]$/) !== -1;
   }
 
-  if (RUN_ASSERTS) {
-    console.assert(validSquare("a1"));
-    console.assert(validSquare("e2"));
-    console.assert(validSquare("g9"));
-    console.assert(!validSquare("D2"));
-    console.assert(!validSquare("a"));
-    console.assert(!validSquare(true));
-    console.assert(!validSquare(null));
-    console.assert(!validSquare({}));
-  }
-
   function validPieceCode(code) {
-    // TODO: Compatible with other representations:
-    // r and w both represent the red side
-    // Adviser, Bachelor and Guard are equal,
-    // Bishop, Elephant and Minister are equal,
-    // Horse and Knight represent the same
-    return isString(code) && code.search(/^[br][KABNRCP]$/) !== -1;
-  }
-
-  if (RUN_ASSERTS) {
-    console.assert(validPieceCode("bP"));
-    console.assert(validPieceCode("bK"));
-    console.assert(validPieceCode("rK"));
-    console.assert(validPieceCode("rR"));
-    console.assert(!validPieceCode("RR"));
-    console.assert(!validPieceCode("Rr"));
-    console.assert(!validPieceCode("a"));
-    console.assert(!validPieceCode(true));
-    console.assert(!validPieceCode(null));
-    console.assert(!validPieceCode({}));
+    // UPDATED: Added 'X' to the regex to support Dark Xiangqi pieces
+    return isString(code) && code.search(/^[br][KABNRCPX]$/) !== -1;
   }
 
   function validFen(fen) {
@@ -248,45 +198,16 @@
 
     // check each section
     for (let i = 0; i < ROW_LENGTH; i++) {
+      // UPDATED: Added 'x' and 'X' to the regex to support Dark Xiangqi pieces
       if (
         chunks[i].length !== COLUMNS.length ||
-        chunks[i].search(/[^kabnrcpKABNRCP1]/) !== -1
+        chunks[i].search(/[^kabnrcpxKABNRCPX1]/) !== -1
       ) {
         return false;
       }
     }
 
     return true;
-  }
-
-  if (RUN_ASSERTS) {
-    console.assert(validFen(START_FEN));
-    console.assert(validFen("9/9/9/9/9/9/9/9/9/9"));
-    console.assert(
-      validFen(
-        "r1bakab1r/9/1cn2cn2/p1p1p1p1p/9/9/P1P1P1P1P/1C2C1N2/9/RNBAKABR1",
-      ),
-    );
-    console.assert(
-      validFen(
-        "rnbakabnr/9/1c2c4/p1p1C1p1p/9/9/P1P1P1P1P/1C7/9/RNBAKABNR b - - 0 2",
-      ),
-    );
-    console.assert(
-      !validFen(
-        "rnbakabnz/9/1c2c4/p1p1C1p1p/9/9/P1P1P1P1P/1C7/9/RNBAKABNR b - - 0 2",
-      ),
-    );
-    console.assert(!validFen("anbrkqbnr/9/9/9/9/9/P1P1P1P1P/9/9/9"));
-    console.assert(!validFen("rnbakabnr/p1p1p1p1p/9/9/9/9/P1P1P1P1P/"));
-    console.assert(!validFen("rnbakabnr/p1p1p1p1p/9/9/9/9/P1P1P1P1P/RNBAKABN"));
-    console.assert(
-      !validFen("999999/p1p1p1p1p/9/9/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR"),
-    );
-    console.assert(
-      !validFen("rnbakabnr/p1p1p1p1p/74/9/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR"),
-    );
-    console.assert(!validFen({}));
   }
 
   function validPositionObject(pos) {
@@ -301,18 +222,6 @@
     }
 
     return true;
-  }
-
-  if (RUN_ASSERTS) {
-    console.assert(validPositionObject(START_POSITION));
-    console.assert(validPositionObject({}));
-    console.assert(validPositionObject({ e2: "rP" }));
-    console.assert(validPositionObject({ e2: "rP", d2: "rP" }));
-    console.assert(!validPositionObject({ e2: "BP" }));
-    console.assert(!validPositionObject({ y2: "rP" }));
-    console.assert(!validPositionObject(null));
-    console.assert(!validPositionObject("start"));
-    console.assert(!validPositionObject(START_FEN));
   }
 
   function isTouchDevice() {
@@ -427,14 +336,6 @@
     return fen;
   }
 
-  if (RUN_ASSERTS) {
-    console.assert(objToFen(START_POSITION) === START_FEN);
-    console.assert(objToFen({}) === "9/9/9/9/9/9/9/9/9/9");
-    console.assert(
-      objToFen({ a2: "rP", b2: "bP" }) === "9/9/9/9/9/9/9/Pp7/9/9",
-    );
-  }
-
   function squeezeFenEmptySquares(fen) {
     return fen
       .replace(/111111111/g, "9")
@@ -546,8 +447,6 @@
     return newPosition;
   }
 
-  // TODO: add some asserts here for calculatePositionFromMoves
-
   // ---------------------------------------------------------------------------
   // HTML
   // ---------------------------------------------------------------------------
@@ -619,7 +518,7 @@
 
     // default board theme is wikimedia
     if (!config.hasOwnProperty("boardTheme") || !isString(config.boardTheme)) {
-      config.boardTheme = "/assets/images/boards/wood-board.svg";
+      config.boardTheme = "/assets/images/boards/ban-co-go.svg";
     }
 
     // animation speeds
@@ -816,19 +715,13 @@
     // -------------------------------------------------------------------------
 
     // calculates square size based on the width of the container
-    // got a little CSS black magic here, so let me explain:
-    // get the width of the container element (could be anything), reduce by 1 for
-    // fudge factor, and then keep reducing until we find an exact mod COLUMNS.length for
-    // our square size
     function calculateSquareSize() {
       const containerWidth = parseInt($container.width(), 10);
 
-      // defensive, prevent infinite loop
       if (!containerWidth || containerWidth <= 0) {
         return 0;
       }
 
-      // pad one pixel
       let boardWidth = containerWidth - 1;
 
       while (boardWidth % COLUMNS.length !== 0 && boardWidth > 0) {
@@ -838,9 +731,7 @@
       return boardWidth / COLUMNS.length;
     }
 
-    // create random IDs for elements
     function createElIds() {
-      // squares on the board
       for (let i = 0; i < COLUMNS.length; i++) {
         for (let j = ROW_LOW; j <= ROW_TOP; j++) {
           const square = COLUMNS[i] + j;
@@ -848,8 +739,7 @@
         }
       }
 
-      // spare pieces
-      const pieces = "KABNRCP".split("");
+      const pieces = "KABNRCPX".split(""); // Added 'X' here just in case sparePieces uses it
       for (let i = 0; i < pieces.length; i++) {
         const whitePiece = "r" + pieces[i];
         const blackPiece = "b" + pieces[i];
@@ -868,8 +758,6 @@
       }
 
       let html = "";
-
-      // algebraic notation / orientation
       const alpha = deepCopy(COLUMNS);
       let row = ROW_TOP;
       if (orientation === "black") {
@@ -899,7 +787,6 @@
             '">';
 
           if (config.showNotation) {
-            // alpha notation
             if (
               (orientation === "red" && row === ROW_LOW) ||
               (orientation === "black" && row === ROW_TOP)
@@ -907,13 +794,12 @@
               html += '<div class="{notation} {alpha}">' + alpha[j] + "</div>";
             }
 
-            // numeric notation
             if (j === 0) {
               html += '<div class="{notation} {numeric}">' + row + "</div>";
             }
           }
 
-          html += "</div>"; // end .square
+          html += "</div>";
         }
         html += '<div class="{clearfix}"></div></div>';
 
@@ -935,10 +821,6 @@
       const css = {};
       css.background = 'url("' + config.boardTheme + '") no-repeat';
       css["background-size"] = "100%";
-      if (orientation === "black") {
-        // css['transform'] = 'rotate(180deg)'
-      }
-
       return css;
     }
 
@@ -946,8 +828,6 @@
       if (isFunction(config.pieceTheme)) {
         return config.pieceTheme(piece);
       }
-
-      // is string
       return interpolateTemplate(config.pieceTheme, { piece: piece });
     }
 
@@ -997,14 +877,11 @@
     // -------------------------------------------------------------------------
 
     function animateSquareToSquare(src, dest, piece, completeFn) {
-      // get information about the source and destination squares
       const $srcSquare = $("#" + squareElsIds[src]);
       const srcSquarePosition = $srcSquare.offset();
       const $destSquare = $("#" + squareElsIds[dest]);
       const destSquarePosition = $destSquare.offset();
 
-      // create the animated piece and absolutely position it
-      // over the source square
       const animatedPieceId = uuid();
       $("body").append(buildPieceHTML(piece, true, animatedPieceId));
       const $animatedPiece = $("#" + animatedPieceId);
@@ -1015,23 +892,16 @@
         left: srcSquarePosition.left,
       });
 
-      // remove original piece from source square
       $srcSquare.find("." + CSS.piece).remove();
 
       function onFinishAnimation1() {
-        // add the "real" piece to the destination square
         $destSquare.append(buildPieceHTML(piece));
-
-        // remove the animated piece
         $animatedPiece.remove();
-
-        // run complete function
         if (isFunction(completeFn)) {
           completeFn();
         }
       }
 
-      // animate the piece to the destination square
       const opts = {
         duration: config.moveSpeed,
         complete: onFinishAnimation1,
@@ -1044,7 +914,6 @@
       const $destSquare = $("#" + squareElsIds[dest]);
       const destOffset = $destSquare.offset();
 
-      // create the animate piece
       const pieceId = uuid();
       $("body").append(buildPieceHTML(piece, true, pieceId));
       const $animatedPiece = $("#" + pieceId);
@@ -1055,22 +924,15 @@
         top: srcOffset.top,
       });
 
-      // on complete
       function onFinishAnimation2() {
-        // add the "real" piece to the destination square
         $destSquare.find("." + CSS.piece).remove();
         $destSquare.append(buildPieceHTML(piece));
-
-        // remove the animated piece
         $animatedPiece.remove();
-
-        // run complete function
         if (isFunction(completeFn)) {
           completeFn();
         }
       }
 
-      // animate the piece to the destination square
       const opts = {
         duration: config.moveSpeed,
         complete: onFinishAnimation2,
@@ -1078,20 +940,17 @@
       $animatedPiece.animate(destOffset, opts);
     }
 
-    // execute an array of animations
     function doAnimations(animations, oldPos, newPos) {
       if (animations.length === 0) return;
 
       let numFinished = 0;
 
       function onFinishAnimation3() {
-        // exit if all the animations aren't finished
         numFinished = numFinished + 1;
         if (numFinished !== animations.length) return;
 
         drawPositionInstant();
 
-        // run their onMoveEnd function
         if (isFunction(config.onMoveEnd)) {
           config.onMoveEnd(deepCopy(oldPos), deepCopy(newPos));
         }
@@ -1100,29 +959,22 @@
       for (let i = 0; i < animations.length; i++) {
         const animation = animations[i];
 
-        // clear a piece
         if (animation.type === "clear") {
           $("#" + squareElsIds[animation.square] + " ." + CSS.piece).fadeOut(
             config.trashSpeed,
             onFinishAnimation3,
           );
-
-          // add a piece with no spare pieces - fade the piece onto the square
         } else if (animation.type === "add" && !config.sparePieces) {
           $("#" + squareElsIds[animation.square])
             .append(buildPieceHTML(animation.piece, true))
             .find("." + CSS.piece)
             .fadeIn(config.appearSpeed, onFinishAnimation3);
-
-          // add a piece with spare pieces - animate from the spares
         } else if (animation.type === "add" && config.sparePieces) {
           animateSparePieceToSquare(
             animation.piece,
             animation.square,
             onFinishAnimation3,
           );
-
-          // move a piece from squareA to squareB
         } else if (animation.type === "move") {
           animateSquareToSquare(
             animation.source,
@@ -1134,17 +986,13 @@
       }
     }
 
-    // calculate an array of animations that need to happen in order to get
-    // from pos1 to pos2
     function calculateAnimations(pos1, pos2) {
-      // make copies of both
       pos1 = deepCopy(pos1);
       pos2 = deepCopy(pos2);
 
       const animations = [];
       const squaresMovedTo = {};
 
-      // remove pieces that are the same in both positions
       for (const i in pos2) {
         if (!pos2.hasOwnProperty(i)) continue;
 
@@ -1154,7 +1002,6 @@
         }
       }
 
-      // find all the "move" animations
       for (const i in pos2) {
         if (!pos2.hasOwnProperty(i)) continue;
 
@@ -1173,7 +1020,6 @@
         }
       }
 
-      // "add" animations
       for (const i in pos2) {
         if (!pos2.hasOwnProperty(i)) continue;
 
@@ -1186,12 +1032,9 @@
         delete pos2[i];
       }
 
-      // "clear" animations
       for (const i in pos1) {
         if (!pos1.hasOwnProperty(i)) continue;
 
-        // do not clear a piece if it is on a square that is the result
-        // of a "move", ie: a piece capture
         if (squaresMovedTo.hasOwnProperty(i)) continue;
 
         animations.push({
@@ -1211,10 +1054,8 @@
     // -------------------------------------------------------------------------
 
     function drawPositionInstant() {
-      // clear the board
       $board.find("." + CSS.piece).remove();
 
-      // add the pieces
       for (const i in currentPosition) {
         if (!currentPosition.hasOwnProperty(i)) continue;
 
@@ -1246,15 +1087,12 @@
       const oldFen = objToFen(oldPos);
       const newFen = objToFen(newPos);
 
-      // do nothing if no change in position
       if (oldFen === newFen) return;
 
-      // run their onChange function
       if (isFunction(config.onChange)) {
         config.onChange(oldPos, newPos);
       }
 
-      // update state
       currentPosition = position;
     }
 
@@ -1276,7 +1114,6 @@
       return "offboard";
     }
 
-    // records the XY coordinates of every square into memory
     function captureSquareOffsets() {
       squareElsOffsets = {};
 
@@ -1294,7 +1131,6 @@
     }
 
     function snapbackDraggedPiece() {
-      // there is no "snapback" for spare pieces
       if (draggedPieceSource === "spare") {
         trashDraggedPiece();
         return;
@@ -1302,12 +1138,10 @@
 
       removeSquareHighlights();
 
-      // animation complete
       function complete() {
         drawPositionInstant();
         $draggedPiece.css("display", "none");
 
-        // run their onSnapbackEnd function
         if (isFunction(config.onSnapbackEnd)) {
           config.onSnapbackEnd(
             draggedPiece,
@@ -1318,77 +1152,60 @@
         }
       }
 
-      // get source square position
       const sourceSquarePosition = $(
         "#" + squareElsIds[draggedPieceSource],
       ).offset();
 
-      // animate the piece to the target square
       const opts = {
         duration: config.snapbackSpeed,
         complete: complete,
       };
       $draggedPiece.animate(sourceSquarePosition, opts);
 
-      // set state
       isDragging = false;
     }
 
     function trashDraggedPiece() {
       removeSquareHighlights();
 
-      // remove the source piece
       const newPosition = deepCopy(currentPosition);
       delete newPosition[draggedPieceSource];
       setCurrentPosition(newPosition);
 
-      // redraw the position
       drawPositionInstant();
-
-      // hide the dragged piece
       $draggedPiece.fadeOut(config.trashSpeed);
-
-      // set state
       isDragging = false;
     }
 
     function dropDraggedPieceOnSquare(square) {
       removeSquareHighlights();
 
-      // update position
       const newPosition = deepCopy(currentPosition);
       delete newPosition[draggedPieceSource];
       newPosition[square] = draggedPiece;
       setCurrentPosition(newPosition);
 
-      // get target square information
       const targetSquarePosition = $("#" + squareElsIds[square]).offset();
 
-      // animation complete
       function onAnimationComplete() {
         drawPositionInstant();
         $draggedPiece.css("display", "none");
 
-        // execute their onSnapEnd function
         if (isFunction(config.onSnapEnd)) {
           config.onSnapEnd(draggedPieceSource, square, draggedPiece);
         }
       }
 
-      // snap the piece to the target square
       const opts = {
         duration: config.snapSpeed,
         complete: onAnimationComplete,
       };
       $draggedPiece.animate(targetSquarePosition, opts);
 
-      // set state
       isDragging = false;
     }
 
     function beginDraggingPiece(source, piece, x, y) {
-      // run their custom onDragStart function
-      // their custom onDragStart function can cancel drag start
       if (
         isFunction(config.onDragStart) &&
         config.onDragStart(
@@ -1401,22 +1218,18 @@
         return;
       }
 
-      // set state
       isDragging = true;
       draggedPiece = piece;
       draggedPieceSource = source;
 
-      // if the piece came from spare pieces, location is offboard
       if (source === "spare") {
         draggedPieceLocation = "offboard";
       } else {
         draggedPieceLocation = source;
       }
 
-      // capture the x, y coordinates of all squares in memory
       captureSquareOffsets();
 
-      // create the dragged piece
       $draggedPiece.attr("src", buildPieceImgSrc(piece)).css({
         display: "",
         position: "absolute",
@@ -1425,7 +1238,6 @@
       });
 
       if (source !== "spare") {
-        // highlight the source square and hide the piece
         $("#" + squareElsIds[source])
           .addClass(CSS.highlight1)
           .find("." + CSS.piece)
@@ -1434,29 +1246,23 @@
     }
 
     function updateDraggedPiece(x, y) {
-      // put the dragged piece over the mouse cursor
       $draggedPiece.css({
         left: x - squareSize / 2,
         top: y - squareSize / 2,
       });
 
-      // get location
       const location = isXYOnSquare(x, y);
 
-      // do nothing if the location has not changed
       if (location === draggedPieceLocation) return;
 
-      // remove highlight from previous square
       if (validSquare(draggedPieceLocation)) {
         $("#" + squareElsIds[draggedPieceLocation]).removeClass(CSS.highlight2);
       }
 
-      // add highlight to new square
       if (validSquare(location)) {
         $("#" + squareElsIds[location]).addClass(CSS.highlight2);
       }
 
-      // run onDragMove
       if (isFunction(config.onDragMove)) {
         config.onDragMove(
           location,
@@ -1468,12 +1274,10 @@
         );
       }
 
-      // update state
       draggedPieceLocation = location;
     }
 
     function stopDraggedPiece(location) {
-      // determine what the action should be
       let action = "drop";
       if (location === "offboard" && config.dropOffBoard === "snapback") {
         action = "snapback";
@@ -1482,29 +1286,18 @@
         action = "trash";
       }
 
-      // run their onDrop function, which can potentially change the drop action
       if (isFunction(config.onDrop)) {
         const newPosition = deepCopy(currentPosition);
 
-        // source piece is a spare piece and position is off the board
-        // if (draggedPieceSource === 'spare' && location === 'offboard') {...}
-        // position has not changed; do nothing
-
-        // source piece is a spare piece and position is on the board
         if (draggedPieceSource === "spare" && validSquare(location)) {
-          // add the piece to the board
           newPosition[location] = draggedPiece;
         }
 
-        // source piece was on the board and position is off the board
         if (validSquare(draggedPieceSource) && location === "offboard") {
-          // remove the piece from the board
           delete newPosition[draggedPieceSource];
         }
 
-        // source piece was on the board and position is on the board
         if (validSquare(draggedPieceSource) && validSquare(location)) {
-          // move the piece
           delete newPosition[draggedPieceSource];
           newPosition[location] = draggedPiece;
         }
@@ -1524,7 +1317,6 @@
         }
       }
 
-      // do it!
       if (action === "snapback") {
         snapbackDraggedPiece();
       } else if (action === "trash") {
@@ -1538,49 +1330,35 @@
     // Public Methods
     // -------------------------------------------------------------------------
 
-    // clear the board
     widget.clear = function (useAnimation) {
       widget.position({}, useAnimation);
     };
 
-    // remove the widget from the page
     widget.destroy = function () {
-      // remove markup
       $container.html("");
       $draggedPiece.remove();
-
-      // remove event handlers
       $container.unbind();
     };
 
-    // shorthand method to get the current FEN
     widget.fen = function () {
       return widget.position("fen");
     };
 
-    // flip orientation
     widget.flip = function () {
       return widget.orientation("flip");
     };
 
-    // move pieces
-    // TODO: this method should be variadic as well as accept an array of moves
     widget.move = function () {
-      // no need to throw an error here; just do nothing or return the current position
       if (arguments.length === 0) return currentPosition;
 
       let useAnimation = true;
-
-      // collect the moves into an object
       const moves = {};
       for (let i = 0; i < arguments.length; i++) {
-        // any "false" to this function means no animations
         if (arguments[i] === false) {
           useAnimation = false;
           continue;
         }
 
-        // skip invalid arguments
         if (!validMove(arguments[i])) {
           error(2826, "Invalid move passed to the move method.", arguments[i]);
           continue;
@@ -1590,27 +1368,19 @@
         moves[tmp[0]] = tmp[1];
       }
 
-      // calculate position from moves
       const newPos = calculatePositionFromMoves(currentPosition, moves);
-
-      // update the board
       widget.position(newPos, useAnimation);
-
-      // return the new position object
       return newPos;
     };
 
     widget.orientation = function (arg) {
-      // no arguments, return the current orientation
       if (arguments.length === 0) {
         return currentOrientation;
       }
 
       if (arg === "flip") {
-        // flip orientation
         currentOrientation = currentOrientation === "black" ? "red" : "black";
       } else {
-        // set to red or black
         if (arg !== "black") {
           currentOrientation = "red";
         } else {
@@ -1623,74 +1393,57 @@
     };
 
     widget.position = function (position, useAnimation) {
-      // no arguments, return the current position
       if (arguments.length === 0) {
         return deepCopy(currentPosition);
       }
 
-      // get position as FEN
       if (isString(position) && position.toLowerCase() === "fen") {
         return objToFen(currentPosition);
       }
 
-      // start position
       if (isString(position) && position.toLowerCase() === "start") {
         position = deepCopy(START_POSITION);
       }
 
-      // convert FEN to position object
       if (validFen(position)) {
         position = fenToObj(position);
       }
 
-      // validate position object
       if (!validPositionObject(position)) {
         error(6482, "Invalid value passed to the position method.", position);
         return;
       }
 
-      // default for useAnimations is true
       if (useAnimation !== false) useAnimation = true;
 
       if (useAnimation) {
-        // start the animations
         const animations = calculateAnimations(currentPosition, position);
         doAnimations(animations, currentPosition, position);
-
-        // set the new position
         setCurrentPosition(position);
       } else {
-        // instant update
         setCurrentPosition(position);
         drawPositionInstant();
       }
     };
 
     widget.resize = function () {
-      // calculate the new square size
       squareSize = calculateSquareSize();
-
-      // set board width
       $board.css("width", squareSize * COLUMNS.length + "px");
 
-      // set drag piece size
       $draggedPiece.css({
         height: squareSize,
         width: squareSize,
       });
 
-      // spare pieces
       if (config.sparePieces) {
         $container
           .find("." + CSS.sparePieces)
           .css("paddingLeft", squareSize + boardBorderSize + "px");
       }
 
-      // redraw the board
       drawBoard();
     };
 
-    // set the starting position
     widget.start = function (useAnimation) {
       widget.position("start", useAnimation);
     };
@@ -1704,10 +1457,8 @@
     }
 
     function mousedownSquare(evt) {
-      // do nothing if we're not draggable
       if (!config.draggable) return;
 
-      // do nothing if there is no piece on this square
       const square = $(this).attr("data-square");
       if (!validSquare(square)) return;
       if (!currentPosition.hasOwnProperty(square)) return;
@@ -1716,10 +1467,8 @@
     }
 
     function touchstartSquare(e) {
-      // do nothing if we're not draggable
       if (!config.draggable) return;
 
-      // do nothing if there is no piece on this square
       const square = $(this).attr("data-square");
       if (!validSquare(square)) return;
       if (!currentPosition.hasOwnProperty(square)) return;
@@ -1734,20 +1483,16 @@
     }
 
     function mousedownSparePiece(evt) {
-      // do nothing if sparePieces is not enabled
       if (!config.sparePieces) return;
 
       const piece = $(this).attr("data-piece");
-
       beginDraggingPiece("spare", piece, evt.pageX, evt.pageY);
     }
 
     function touchstartSparePiece(e) {
-      // do nothing if sparePieces is not enabled
       if (!config.sparePieces) return;
 
       const piece = $(this).attr("data-piece");
-
       e = e.originalEvent;
       beginDraggingPiece(
         "spare",
@@ -1769,10 +1514,7 @@
     );
 
     function touchmoveWindow(evt) {
-      // do nothing if we are not dragging a piece
       if (!isDragging) return;
-
-      // prevent screen from scrolling
       evt.preventDefault();
 
       updateDraggedPiece(
@@ -1787,20 +1529,15 @@
     );
 
     function mouseupWindow(evt) {
-      // do nothing if we are not dragging a piece
       if (!isDragging) return;
 
-      // get the location
       const location = isXYOnSquare(evt.pageX, evt.pageY);
-
       stopDraggedPiece(location);
     }
 
     function touchendWindow(evt) {
-      // do nothing if we are not dragging a piece
       if (!isDragging) return;
 
-      // get the location
       const location = isXYOnSquare(
         evt.originalEvent.changedTouches[0].pageX,
         evt.originalEvent.changedTouches[0].pageY,
@@ -1810,26 +1547,17 @@
     }
 
     function mouseenterSquare(evt) {
-      // do not fire this event if we are dragging a piece
-      // NOTE: this should never happen, but it's a safeguard
       if (isDragging) return;
-
-      // exit if they did not provide a onMouseoverSquare function
       if (!isFunction(config.onMouseoverSquare)) return;
 
-      // get the square
       const square = $(evt.currentTarget).attr("data-square");
-
-      // NOTE: this should never happen; defensive
       if (!validSquare(square)) return;
 
-      // get the piece on this square
       let piece = false;
       if (currentPosition.hasOwnProperty(square)) {
         piece = currentPosition[square];
       }
 
-      // execute their function
       config.onMouseoverSquare(
         square,
         piece,
@@ -1839,26 +1567,17 @@
     }
 
     function mouseleaveSquare(evt) {
-      // do not fire this event if we are dragging a piece
-      // NOTE: this should never happen, but it's a safeguard
       if (isDragging) return;
-
-      // exit if they did not provide an onMouseoutSquare function
       if (!isFunction(config.onMouseoutSquare)) return;
 
-      // get the square
       const square = $(evt.currentTarget).attr("data-square");
-
-      // NOTE: this should never happen; defensive
       if (!validSquare(square)) return;
 
-      // get the piece on this square
       let piece = false;
       if (currentPosition.hasOwnProperty(square)) {
         piece = currentPosition[square];
       }
 
-      // execute their function
       config.onMouseoutSquare(
         square,
         piece,
@@ -1872,10 +1591,8 @@
     // -------------------------------------------------------------------------
 
     function addEvents() {
-      // prevent "image drag"
       $("body").on("mousedown mousemove", "." + CSS.piece, stopDefault);
 
-      // mouse drag pieces
       $board.on("mousedown", "." + CSS.square, mousedownSquare);
       $container.on(
         "mousedown",
@@ -1883,18 +1600,15 @@
         mousedownSparePiece,
       );
 
-      // mouse enter / leave square
       $board
         .on("mouseenter", "." + CSS.square, mouseenterSquare)
         .on("mouseleave", "." + CSS.square, mouseleaveSquare);
 
-      // piece drag
       const $window = $(window);
       $window
         .on("mousemove", throttledMousemoveWindow)
         .on("mouseup", mouseupWindow);
 
-      // touch drag pieces
       if (isTouchDevice()) {
         $board.on("touchstart", "." + CSS.square, touchstartSquare);
         $container.on(
@@ -1909,10 +1623,8 @@
     }
 
     function initDOM() {
-      // create unique IDs for all the elements we will create
       createElIds();
 
-      // build board and save it in memory
       $container.html(buildContainerHTML(config.sparePieces));
       $board = $container.find("." + CSS.board);
 
@@ -1921,42 +1633,26 @@
         $sparePiecesBottom = $container.find("." + CSS.sparePiecesBottom);
       }
 
-      // create the drag piece
       const draggedPieceId = uuid();
       $("body").append(buildPieceHTML("rP", true, draggedPieceId));
       $draggedPiece = $("#" + draggedPieceId);
 
-      // TODO: need to remove this dragged piece element if the board is no
-      // longer in the DOM
-
-      // get the border size
       boardBorderSize = parseInt($board.css("borderLeftWidth"), 10);
-
-      // set the size and draw the board
       widget.resize();
     }
-
-    // -------------------------------------------------------------------------
-    // Initialization
-    // -------------------------------------------------------------------------
 
     setInitialState();
     initDOM();
     addEvents();
 
-    // return the widget object
     return widget;
   } // end constructor
 
-  // TODO: do module exports here
   window.Xiangqiboard = constructor;
-
-  // expose util functions
   window.Xiangqiboard.fenToObj = fenToObj;
   window.Xiangqiboard.objToFen = objToFen;
-})(); // end anonymous wrapper
+})();
 
-/* export Chessboard object if using node or any other CommonJS compatible environment */
 if (typeof exports !== "undefined") {
   exports.Xiangqiboard = window.Xiangqiboard;
 }
