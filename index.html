@@ -126,27 +126,6 @@
         border: none !important; /* Tuyệt đối không dùng border CSS để tránh nét đôi */
       }
 
-      #board::before {
-        content: "";
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        /* Gắn trực tiếp file SVG làm hình nền */
-        background: url("https://coup.cotuong.top/assets/images/boards/ban-co.svg")
-          no-repeat center / contain;
-        z-index: 0;
-        pointer-events: none; /* Tránh cản trở thao tác click của người dùng */
-        transition: filter 0.4s ease;
-      }
-
-      .dark #board::before {
-        /* Sử dụng Filter để biến đổi màu đen gốc của SVG thành tông màu sáng (vàng/cam) khi ở chế độ Dark Mode */
-        filter: invert(85%) sepia(30%) saturate(600%) hue-rotate(350deg)
-          brightness(1.2) drop-shadow(0 0 3px rgba(253, 230, 138, 0.4));
-      }
-
       /* CSS Hiển thị nước đi khả thi */
       .valid-move-dot {
         position: relative;
