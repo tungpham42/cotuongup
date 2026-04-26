@@ -91,6 +91,7 @@
         width: 100%;
         max-width: 500px;
         margin: 0 auto;
+        position: relative; /* Chuẩn bị cho lớp Mask */
       }
       body {
         transition:
@@ -102,16 +103,57 @@
         -webkit-backdrop-filter: blur(12px);
       }
 
-      /* CSS cho Click-to-move */
+      /* --- CHỈNH SỬA CURSOR POINTER --- */
       .square-2b8ce {
-        cursor: pointer;
+        cursor: default !important; /* Mặc định các ô cờ trống là trỏ chuột bình thường */
+        z-index: 1; /* Đảm bảo ô cờ nổi lên trên lớp Mask kẻ vạch */
       }
+
+      .piece-1e8b9,
+      .valid-move-dot,
+      .valid-move-capture {
+        cursor: pointer !important; /* Chỉ hiện bàn tay khi trỏ vào quân cờ hoặc chấm gợi ý */
+      }
+
       .highlight1-e13fc {
         box-shadow: inset 0 0 0 4px rgba(244, 63, 94, 0.8) !important;
         border-radius: 4px;
       }
 
-      /* --- [THÊM MỚI] CSS cho hiệu ứng hiển thị nước đi khả thi --- */
+      /* --- ĐỔI MÀU BÀN CỜ ĐỘNG QUA CSS MASK --- */
+      #board {
+        background-image: none !important; /* Xóa hình nền tĩnh mặc định do JS tạo ra */
+      }
+
+      #board::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        /* Màu nét vẽ Light Mode: Nâu sẫm */
+        background-color: rgba(120, 53, 15, 0.85);
+        /* Dùng SVG làm mặt nạ đục lỗ */
+        -webkit-mask: url("https://coup.cotuong.top/assets/images/boards/ban-co.svg")
+          no-repeat center / 100% 100%;
+        mask: url("https://coup.cotuong.top/assets/images/boards/ban-co.svg")
+          no-repeat center / 100% 100%;
+        z-index: 0;
+        pointer-events: none; /* Tránh chặn thao tác click vào ô cờ */
+        transition:
+          background-color 0.4s ease,
+          filter 0.4s ease;
+      }
+
+      .dark #board::before {
+        /* Màu nét vẽ Dark Mode: Vàng sáng rực rỡ */
+        background-color: #fde68a;
+        /* Hiệu ứng phát sáng nhẹ dọc theo đường kẻ */
+        filter: drop-shadow(0 0 3px rgba(253, 230, 138, 0.5));
+      }
+
+      /* CSS Hiển thị nước đi khả thi */
       .valid-move-dot {
         position: relative;
       }
@@ -124,8 +166,8 @@
         width: 25%;
         height: 25%;
         border-radius: 50%;
-        background-color: rgba(244, 63, 94, 0.85); /* Tone màu Rose */
-        pointer-events: none; /* Tránh chặn sự kiện click */
+        background-color: rgba(244, 63, 94, 0.85);
+        pointer-events: none;
         z-index: 10;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
       }
@@ -143,10 +185,9 @@
         border-radius: 50%;
         pointer-events: none;
         z-index: 10;
-        transform: scale(0.9); /* Thu nhỏ vòng ngắm một chút ôm lấy quân cờ */
+        transform: scale(0.9);
         box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.3);
       }
-      /* --- KẾT THÚC CSS --- */
     </style>
   </head>
   <body
@@ -450,7 +491,7 @@
               if (piece && piece[0] === this.turn) {
                 this.selectedSquare = square;
                 this.highlightSquare(square);
-                this.showValidMoves(square); // [THÊM MỚI] Tính toán các ô hợp lệ
+                this.showValidMoves(square);
               }
               return;
             }
@@ -466,7 +507,7 @@
             if (piece && piece[0] === this.turn) {
               this.selectedSquare = square;
               this.highlightSquare(square);
-              this.showValidMoves(square); // [THÊM MỚI] Thay đổi tính toán sang ô mới
+              this.showValidMoves(square);
               return;
             }
 
@@ -497,7 +538,6 @@
             }
           },
 
-          // [THÊM MỚI] Quét và hiển thị các điểm đi hợp lệ
           showValidMoves(source) {
             const boardState = this.board.position();
             const piece = boardState[source];
@@ -511,17 +551,14 @@
                 const target = f + r;
                 if (source === target) return;
 
-                // Test "nháp" nước đi bằng cách gửi tham số updateUI = false
                 if (
                   this.processMove(source, target, piece, boardState, false)
                 ) {
                   if (boardState[target]) {
-                    // Nếu ở đích có quân địch (Ăn quân)
                     $(`#board .square-${target}`).addClass(
                       "valid-move-capture",
                     );
                   } else {
-                    // Nếu là ô trống (Di chuyển)
                     $(`#board .square-${target}`).addClass("valid-move-dot");
                   }
                 }
@@ -530,7 +567,6 @@
           },
 
           clearHighlights() {
-            // [CẬP NHẬT] Xóa luôn cả class của dấu chấm và viền ăn quân
             $("#board .square-2b8ce").removeClass(
               "highlight1-e13fc highlight2-e0a03 valid-move-dot valid-move-capture",
             );
