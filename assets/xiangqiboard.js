@@ -518,7 +518,7 @@
 
     // default board theme is wikimedia
     if (!config.hasOwnProperty("boardTheme") || !isString(config.boardTheme)) {
-      config.boardTheme = "/assets/images/boards/xiangqi-board.svg";
+      config.boardTheme = "/assets/images/boards/ban-co.svg";
     }
 
     // animation speeds
