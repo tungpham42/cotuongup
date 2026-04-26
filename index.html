@@ -57,8 +57,8 @@
             },
             colors: {
               board: {
-                light: "#E8CBAA", // Ấm áp, màu gỗ sồi sáng
-                dark: "#8B5A2B", // Gỗ óc chó trầm ấm
+                light: "#E8CBAA",
+                dark: "#8B5A2B",
               },
             },
             boxShadow: {
@@ -92,7 +92,6 @@
         max-width: 500px;
         margin: 0 auto;
       }
-      /* Tinh chỉnh mượt mà cho theme switch */
       body {
         transition:
           background-color 0.3s ease,
@@ -101,6 +100,16 @@
       .glass-panel {
         backdrop-filter: blur(12px);
         -webkit-backdrop-filter: blur(12px);
+      }
+
+      /* Cải thiện CSS cho Click-to-move */
+      .square-2b8ce {
+        cursor: pointer; /* Đổi con trỏ thành bàn tay khi trỏ vào ô cờ */
+      }
+      /* Ghi đè màu highlight vàng mặc định của thư viện sang màu Hồng Tone-Sur-Tone */
+      .highlight1-e13fc {
+        box-shadow: inset 0 0 0 4px rgba(244, 63, 94, 0.8) !important; /* Tailwind rose-500 */
+        border-radius: 4px;
       }
     </style>
   </head>
@@ -291,6 +300,9 @@
           isThinking: false,
           checkCount: { r: 0, b: 0 },
 
+          // Trạng thái theo dõi Click-to-Move
+          selectedSquare: null,
+
           startPosition: {
             a9: "bX",
             b9: "bX",
@@ -361,7 +373,6 @@
             i3: "rP",
           },
 
-          // Utility Lấy trạng thái màu hiện tại cho popups
           getSwalColors() {
             const isDark = document.documentElement.classList.contains("dark");
             return {
@@ -372,16 +383,19 @@
 
           init() {
             const config = {
-              draggable: true,
+              draggable: false, // [QUAN TRỌNG] Tắt chế độ kéo thả của thư viện
               position: this.startPosition,
-              onDragStart: this.onDragStart.bind(this),
-              onDrop: this.onDrop.bind(this),
               pieceTheme:
                 "https://coup.cotuong.top/assets/images/pieces/{piece}.svg",
             };
             this.board = Xiangqiboard("board", config);
 
-            // Xử lý Responsive khi xoay màn hình điện thoại hoặc thu phóng
+            // [THÊM MỚI] Lắng nghe sự kiện click/tap lên các ô cờ
+            $("#board").on("click", ".square-2b8ce", (e) => {
+              const square = $(e.currentTarget).attr("data-square");
+              this.handleSquareClick(square);
+            });
+
             window.addEventListener("resize", () => {
               if (this.board) {
                 this.board.resize();
@@ -389,6 +403,89 @@
             });
 
             this.startNewGame();
+          },
+
+          // [THÊM MỚI] Logic xử lý khi click vào ô cờ
+          handleSquareClick(square) {
+            // Chặn tương tác nếu AI đang nghĩ hoặc chưa tới lượt
+            if (this.isThinking) return;
+            if (this.gameMode === "pve" && this.turn === "b") return;
+
+            const pos = this.board.position();
+            const piece = pos[square];
+
+            // 1. Nếu chưa có quân cờ nào được chọn trước đó
+            if (!this.selectedSquare) {
+              // Chỉ chọn nếu ô đó có quân cờ và thuộc về người đang tới lượt
+              if (piece && piece[0] === this.turn) {
+                this.selectedSquare = square;
+                this.highlightSquare(square);
+              }
+              return;
+            }
+
+            // 2. Nếu đã có 1 quân cờ đang được chọn sẵn
+            const source = this.selectedSquare;
+
+            // Bấm lại vào chính nó -> Hủy chọn
+            if (source === square) {
+              this.selectedSquare = null;
+              this.clearHighlights();
+              return;
+            }
+
+            // Bấm vào 1 quân cờ khác CÙNG PHE -> Chuyển hướng lựa chọn
+            if (piece && piece[0] === this.turn) {
+              this.selectedSquare = square;
+              this.highlightSquare(square);
+              return;
+            }
+
+            // Bấm vào ô trống hoặc quân ĐỐI PHƯƠNG -> Cố gắng di chuyển
+            const sourcePiece = pos[source];
+            let validMove = this.processMove(
+              source,
+              square,
+              sourcePiece,
+              pos,
+              true,
+            );
+
+            if (validMove) {
+              // Yêu cầu thư viện di chuyển quân cờ mượt mà
+              this.board.move(`${source}-${square}`);
+
+              // Xóa trạng thái chọn
+              this.selectedSquare = null;
+              this.clearHighlights();
+
+              // Chuyển lượt và kiểm tra điều kiện kết thúc
+              this.turn = this.turn === "r" ? "b" : "r";
+              if (this.checkWinCondition(this.board.position())) return;
+
+              // Kích hoạt AI nếu cần
+              if (this.gameMode === "pve" && this.turn === "b") {
+                this.isThinking = true;
+                setTimeout(() => this.makeComputerMove(), 50);
+              }
+            } else {
+              // Nước đi không hợp lệ -> Hủy chọn
+              this.selectedSquare = null;
+              this.clearHighlights();
+            }
+          },
+
+          // [THÊM MỚI] Hàm dọn dẹp viền highlight
+          clearHighlights() {
+            $("#board .square-2b8ce").removeClass(
+              "highlight1-e13fc highlight2-e0a03",
+            );
+          },
+
+          // [THÊM MỚI] Hàm bôi đậm ô đang được chọn
+          highlightSquare(sq) {
+            this.clearHighlights();
+            $(`#board .square-${sq}`).addClass("highlight1-e13fc");
           },
 
           setMode(mode) {
@@ -400,6 +497,11 @@
             this.turn = "r";
             this.isThinking = false;
             this.checkCount = { r: 0, b: 0 };
+
+            // Đặt lại trạng thái khi ván mới bắt đầu
+            this.selectedSquare = null;
+            this.clearHighlights();
+
             this.shufflePieces();
             this.board.position(this.startPosition);
 
@@ -506,34 +608,6 @@
             redSquares.forEach((sq, i) => {
               this.hiddenPieces[sq] = shuffledRed[i];
             });
-          },
-
-          onDragStart(source, piece) {
-            if (this.gameMode === "pve" && this.turn === "b") return false;
-            if (this.turn !== piece[0]) return false;
-            return true;
-          },
-
-          onDrop(source, target, piece, newPos, oldPos) {
-            if (source === target) return "snapback";
-
-            let validMove = this.processMove(
-              source,
-              target,
-              piece,
-              oldPos,
-              true,
-            );
-            if (!validMove) return "snapback";
-
-            this.turn = this.turn === "r" ? "b" : "r";
-
-            if (this.checkWinCondition(this.board.position())) return;
-
-            if (this.gameMode === "pve" && this.turn === "b") {
-              this.isThinking = true;
-              setTimeout(() => this.makeComputerMove(), 50);
-            }
           },
 
           isBoardStateValid(movingColor, boardState) {
@@ -656,7 +730,6 @@
 
             const colors = this.getSwalColors();
 
-            // Kiểm tra tự chiếu / 2 tướng đối mặt
             if (
               enemyKingSq &&
               !this.isBoardStateValid(piece[0], simulatedState)
@@ -677,7 +750,6 @@
               return false;
             }
 
-            // Kiểm tra luật cấm chiếu quá 3 lần
             let isCheckingEnemy = !this.isBoardStateValid(
               enemyColor,
               simulatedState,
@@ -709,12 +781,13 @@
               if (isHidden) {
                 let realPiece = this.hiddenPieces[source];
                 delete this.hiddenPieces[source];
+                // Tăng timeout lên một chút để đợi animation di chuyển kết thúc trước khi lật mặt quân
                 setTimeout(() => {
                   let position = this.board.position();
                   delete position[source];
                   position[target] = realPiece;
                   this.board.position(position, false);
-                }, 150);
+                }, 250);
               }
             }
             return true;
