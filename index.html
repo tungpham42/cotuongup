@@ -430,6 +430,97 @@
             };
           },
 
+          // --- [THÊM MỚI] BỘ TỔNG HỢP ÂM THANH WEB AUDIO API ---
+          playSound(type) {
+            try {
+              if (!window.audioCtx) {
+                window.audioCtx = new (
+                  window.AudioContext || window.webkitAudioContext
+                )();
+              }
+              if (window.audioCtx.state === "suspended") {
+                window.audioCtx.resume();
+              }
+
+              const t = window.audioCtx.currentTime;
+              const osc = window.audioCtx.createOscillator();
+              const gain = window.audioCtx.createGain();
+              osc.connect(gain);
+              gain.connect(window.audioCtx.destination);
+
+              if (type === "move") {
+                // Âm thanh đi cờ: Tiếng gõ trầm ngắn
+                osc.type = "sine";
+                osc.frequency.setValueAtTime(300, t);
+                osc.frequency.exponentialRampToValueAtTime(40, t + 0.08);
+                gain.gain.setValueAtTime(0.5, t);
+                gain.gain.exponentialRampToValueAtTime(0.01, t + 0.08);
+                osc.start(t);
+                osc.stop(t + 0.08);
+              } else if (type === "capture") {
+                // Âm thanh ăn quân: Tiếng gõ vang hơn, đanh hơn
+                osc.type = "triangle";
+                osc.frequency.setValueAtTime(400, t);
+                osc.frequency.exponentialRampToValueAtTime(50, t + 0.12);
+                gain.gain.setValueAtTime(0.6, t);
+                gain.gain.exponentialRampToValueAtTime(0.01, t + 0.12);
+                osc.start(t);
+                osc.stop(t + 0.12);
+              } else if (type === "check") {
+                // Âm thanh chiếu tướng: Chuông đôi cảnh báo
+                osc.type = "sine";
+                osc.frequency.setValueAtTime(600, t);
+                gain.gain.setValueAtTime(0.4, t);
+                gain.gain.exponentialRampToValueAtTime(0.01, t + 0.4);
+                osc.start(t);
+                osc.stop(t + 0.4);
+
+                const osc2 = window.audioCtx.createOscillator();
+                const gain2 = window.audioCtx.createGain();
+                osc2.connect(gain2);
+                gain2.connect(window.audioCtx.destination);
+                osc2.type = "sine";
+                osc2.frequency.setValueAtTime(800, t + 0.1);
+                gain2.gain.setValueAtTime(0.4, t + 0.1);
+                gain2.gain.exponentialRampToValueAtTime(0.01, t + 0.5);
+                osc2.start(t + 0.1);
+                osc2.stop(t + 0.5);
+              } else if (type === "win") {
+                // Âm thanh Thắng / Chiếu bí: Chuỗi nốt cao đi lên vui tươi
+                const notes = [440, 554, 659, 880];
+                notes.forEach((freq, i) => {
+                  const o = window.audioCtx.createOscillator();
+                  const g = window.audioCtx.createGain();
+                  o.connect(g);
+                  g.connect(window.audioCtx.destination);
+                  o.type = "triangle";
+                  o.frequency.setValueAtTime(freq, t + i * 0.15);
+                  g.gain.setValueAtTime(0.3, t + i * 0.15);
+                  g.gain.exponentialRampToValueAtTime(0.01, t + i * 0.15 + 0.5);
+                  o.start(t + i * 0.15);
+                  o.stop(t + i * 0.15 + 0.5);
+                });
+              } else if (type === "lose") {
+                // Âm thanh Thua / Chiếu bí: Chuỗi nốt trầm đi xuống buồn bã
+                const notes = [440, 415, 392, 349];
+                notes.forEach((freq, i) => {
+                  const o = window.audioCtx.createOscillator();
+                  const g = window.audioCtx.createGain();
+                  o.connect(g);
+                  g.connect(window.audioCtx.destination);
+                  o.type = "sawtooth";
+                  o.frequency.setValueAtTime(freq, t + i * 0.3);
+                  g.gain.setValueAtTime(0.3, t + i * 0.3);
+                  g.gain.exponentialRampToValueAtTime(0.01, t + i * 0.3 + 0.8);
+                  o.start(t + i * 0.3);
+                  o.stop(t + i * 0.3 + 0.8);
+                });
+              }
+            } catch (e) {
+              console.log("Trình duyệt chặn phát âm thanh tự động", e);
+            }
+          },
+
           init() {
             const config = {
               draggable: false,
@@ -485,6 +576,9 @@
             }
 
             const sourcePiece = pos[source];
+            // [THÊM MỚI] Ghi nhớ trước xem ô đang nhấn có chứa quân địch không để phát âm thanh ăn quân
+            const isCapture = pos[square] && pos[square][0] !== this.turn;
+
             let validMove = this.processMove(
               source,
               square,
@@ -499,9 +593,23 @@
               this.clearHighlights();
 
               this.turn = this.turn === "r" ? "b" : "r";
-              if (this.checkWinCondition(this.board.position())) return;
 
-              if (this.gameMode === "pve" && this.turn === "b") {
+              // [THÊM MỚI] Đánh giá bảng cờ sau nước đi để phát ra âm thanh phù hợp
+              const newState = this.board.position();
+              const isGameOver = this.checkWinCondition(newState);
+
+              if (!isGameOver) {
+                const isCheck = !this.isBoardStateValid(this.turn, newState);
+                if (isCheck) {
+                  this.playSound("check");
+                } else if (isCapture) {
+                  this.playSound("capture");
+                } else {
+                  this.playSound("move");
+                }
+              }
+
+              if (this.gameMode === "pve" && this.turn === "b" && !isGameOver) {
                 this.isThinking = true;
                 setTimeout(() => this.makeComputerMove(), 2000);
               }
@@ -999,6 +1107,10 @@
               }
             }
 
+            // [THÊM MỚI] Ghi nhớ xem AI có ăn quân của người chơi không
+            const isCapture =
+              boardState[bestMove.to] && boardState[bestMove.to][0] !== "b";
+
             this.board.move(`${bestMove.from}-${bestMove.to}`);
             this.processMove(
               bestMove.from,
@@ -1010,7 +1122,21 @@
 
             this.turn = "r";
             this.isThinking = false;
-            this.checkWinCondition(this.board.position());
+
+            // [THÊM MỚI] Đánh giá bảng cờ để phát âm thanh sau nước đi của AI
+            const newState = this.board.position();
+            const isGameOver = this.checkWinCondition(newState);
+
+            if (!isGameOver) {
+              const isCheck = !this.isBoardStateValid(this.turn, newState);
+              if (isCheck) {
+                this.playSound("check");
+              } else if (isCapture) {
+                this.playSound("capture");
+              } else {
+                this.playSound("move");
+              }
+            }
           },
 
           minimax(boardState, depth, alpha, beta, isMaximizingPlayer) {
@@ -1168,6 +1294,14 @@
             let kings = Object.values(boardState).filter((p) => p[1] === "K");
             if (kings.length < 2) {
               let winner = kings[0] === "rK" ? "Đỏ" : "Đen";
+
+              // [THÊM MỚI] Đánh giá phe chiến thắng để phát nhạc Win hay Lose
+              if (this.gameMode === "pve") {
+                this.playSound(winner === "Đỏ" ? "win" : "lose");
+              } else {
+                this.playSound("win");
+              }
+
               this.showGameOverNotification(winner, "Bắt được Tướng!");
               return true;
             }
@@ -1175,6 +1309,14 @@
             let possibleMoves = this.generateLegalMoves(this.turn, boardState);
             if (possibleMoves.length === 0) {
               let winner = this.turn === "r" ? "Đen" : "Đỏ";
+
+              // [THÊM MỚI] Đánh giá phe chiến thắng để phát nhạc Win hay Lose
+              if (this.gameMode === "pve") {
+                this.playSound(winner === "Đỏ" ? "win" : "lose");
+              } else {
+                this.playSound("win");
+              }
+
               this.showGameOverNotification(winner, "Chiếu bí / Hết nước đi!");
               return true;
             }
