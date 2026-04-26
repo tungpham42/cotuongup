@@ -3,8 +3,43 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Dark Xiangqi (Cờ Úp) - AI Edition</title>
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <meta
+      name="description"
+      content="Trò chơi Cờ Úp với AI sử dụng thuật toán Minimax và Alpha-Beta Pruning. Chơi ngay để thử thách trí tuệ của bạn!"
+    />
+    <meta
+      name="keywords"
+      content="Cờ Úp, Xiangqi, Chinese Chess, Minimax, Alpha-Beta Pruning, Game AI, JavaScript Game"
+    />
+    <meta name="author" content="Tùng Phạm" />
+    <meta
+      property="og:title"
+      content="Cờ Úp - Minimax Engine with Alpha-Beta Pruning"
+    />
+    <meta
+      property="og:description"
+      content="Trò chơi Cờ Úp với AI sử dụng thuật toán Minimax và Alpha-Beta Pruning. Chơi ngay để thử thách trí tuệ của bạn!"
+    />
+    <meta property="og:image" content="./assets/images/1200x630.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Cờ Úp" />
 
+    <meta property="og:url" content="https://coup.cotuong.top" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta
+      name="twitter:title"
+      content="Cờ Úp - Minimax Engine with Alpha-Beta Pruning"
+    />
+    <meta
+      name="twitter:description"
+      content="Trò chơi Cờ Úp với AI sử dụng thuật toán Minimax và Alpha-Beta Pruning. Chơi ngay để thử thách trí tuệ của bạn!"
+    />
+    <meta name="twitter:image" content="./assets/images/1200x630.jpg" />
+    <title>Cờ Úp</title>
+    <link rel="icon" type="image/svg+xml" href="./assets/images/favicon.svg" />
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
@@ -24,12 +59,30 @@
       defer
       src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"
     ></script>
+    <script
+      async
+      src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3585118770961536"
+      crossorigin="anonymous"
+    ></script>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script
+      async
+      src="https://www.googletagmanager.com/gtag/js?id=G-QEW6K9YPY7"
+    ></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      gtag("js", new Date());
+
+      gtag("config", "G-QEW6K9YPY7");
+    </script>
 
     <style>
       .hidden-piece {
         filter: brightness(0.5) contrast(1.2);
       }
-      /* Prevent selection highlighting on the board */
       #board {
         user-select: none;
         -webkit-user-select: none;
@@ -44,7 +97,7 @@
       class="container mx-auto px-4 max-w-4xl py-8 flex flex-col items-center"
     >
       <div class="text-center mb-6">
-        <h1 class="text-4xl font-bold text-red-500 mb-2">Cờ Úp vs AI</h1>
+        <h1 class="text-4xl font-bold text-red-500 mb-2">Cờ Úp</h1>
         <p class="text-gray-400">Minimax Engine with Alpha-Beta Pruning</p>
       </div>
 
@@ -56,7 +109,7 @@
             @click="startNewGame()"
             class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded shadow transition"
           >
-            Restart
+            Chơi lại
           </button>
 
           <div class="flex bg-gray-800 rounded shadow-inner p-1">
@@ -65,14 +118,14 @@
               :class="gameMode === 'pvp' ? 'bg-gray-600 text-white' : 'text-gray-400 hover:text-white'"
               class="px-3 py-1 rounded transition text-sm"
             >
-              PvP
+              Chơi với bạn bè
             </button>
             <button
               @click="setMode('pve')"
               :class="gameMode === 'pve' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:text-white'"
               class="px-3 py-1 rounded transition text-sm"
             >
-              Play AI
+              Chơi với AI
             </button>
           </div>
         </div>
@@ -80,9 +133,9 @@
         <div
           class="bg-gray-800 px-4 py-2 rounded flex items-center shadow-inner border border-gray-700"
         >
-          <span class="font-semibold text-gray-300">Turn: </span>
+          <span class="font-semibold text-gray-300">Lượt: </span>
           <span
-            x-text="turn === 'r' ? 'Red' : 'Black'"
+            x-text="turn === 'r' ? 'Đỏ' : 'Đen'"
             :class="turn === 'r' ? 'text-red-500 font-bold ml-2' : 'text-gray-400 font-bold ml-2'"
           ></span>
         </div>
@@ -97,7 +150,7 @@
           style="display: none"
         >
           <div class="text-white font-bold text-xl animate-pulse">
-            AI is thinking...
+            Đang suy nghĩ...
           </div>
         </div>
         <div id="board" class="w-[500px] h-[550px]"></div>
@@ -111,12 +164,11 @@
       document.addEventListener("alpine:init", () => {
         Alpine.data("xiangqiGame", () => ({
           board: null,
-          turn: "r", // Standardized to 'r' for Red and 'b' for Black
+          turn: "r",
           hiddenPieces: {},
           gameMode: "pve",
           isThinking: false,
 
-          // Using a strict position dictionary so xiangqiboard directly loads custom 'rX'/'bX' pieces
           startPosition: {
             a9: "bX",
             b9: "bX",
@@ -134,7 +186,6 @@
             e6: "bX",
             g6: "bX",
             i6: "bX",
-
             a0: "rX",
             b0: "rX",
             c0: "rX",
@@ -194,7 +245,6 @@
               position: this.startPosition,
               onDragStart: this.onDragStart.bind(this),
               onDrop: this.onDrop.bind(this),
-              // This format directly loads your rR.svg, rX.svg, bK.svg files
               pieceTheme: "assets/images/pieces/{piece}.svg",
             };
             this.board = Xiangqiboard("board", config);
@@ -213,11 +263,11 @@
             this.board.position(this.startPosition);
 
             Swal.fire({
-              title: "Game Started",
+              title: "Trò chơi bắt đầu",
               text:
                 this.gameMode === "pve"
-                  ? "You are Red. AI is Black."
-                  : "Player vs Player",
+                  ? "Bạn là đỏ. AI là đen."
+                  : "Người chơi vs Người chơi",
               icon: "info",
               background: "#1f2937",
               color: "#fff",
@@ -313,8 +363,6 @@
 
           onDragStart(source, piece) {
             if (this.gameMode === "pve" && this.turn === "b") return false;
-
-            // Prevent picking up enemy pieces (piece[0] is 'r' or 'b')
             if (this.turn !== piece[0]) return false;
             return true;
           },
@@ -333,6 +381,7 @@
 
             this.turn = this.turn === "r" ? "b" : "r";
 
+            // If the game ends here, stop the AI from making a move
             if (this.checkWinCondition(this.board.position())) return;
 
             if (this.gameMode === "pve" && this.turn === "b") {
@@ -341,17 +390,142 @@
             }
           },
 
+          // --- CORE CHECK/FLYING GENERAL VALIDATION ---
+          isBoardStateValid(movingColor, boardState) {
+            let redKingSq = null;
+            let blackKingSq = null;
+
+            for (let sq in boardState) {
+              if (boardState[sq] === "rK") redKingSq = sq;
+              if (boardState[sq] === "bK") blackKingSq = sq;
+            }
+
+            // 1. Flying General Rule
+            if (redKingSq && blackKingSq) {
+              const fileMap = {
+                a: 0,
+                b: 1,
+                c: 2,
+                d: 3,
+                e: 4,
+                f: 5,
+                g: 6,
+                h: 7,
+                i: 8,
+              };
+              let rx = fileMap[redKingSq[0]],
+                ry = parseInt(redKingSq[1]);
+              let bx = fileMap[blackKingSq[0]],
+                by = parseInt(blackKingSq[1]);
+
+              if (rx === bx) {
+                let piecesBetween = 0;
+                let min = Math.min(ry, by);
+                let max = Math.max(ry, by);
+                let reverseFileMap = [
+                  "a",
+                  "b",
+                  "c",
+                  "d",
+                  "e",
+                  "f",
+                  "g",
+                  "h",
+                  "i",
+                ];
+                for (let y = min + 1; y < max; y++) {
+                  if (boardState[reverseFileMap[rx] + y]) piecesBetween++;
+                }
+                if (piecesBetween === 0) return false;
+              }
+            }
+
+            // 2. King Safety Rule
+            let myKingSq = movingColor === "r" ? redKingSq : blackKingSq;
+            if (!myKingSq) return true;
+
+            let enemyColor = movingColor === "r" ? "b" : "r";
+
+            for (let sq in boardState) {
+              let piece = boardState[sq];
+              if (piece[0] === enemyColor) {
+                let isHidden = piece[1] === "X";
+                let fakeType = this.originalSquares[sq]
+                  ? piece[0] + this.originalSquares[sq][1]
+                  : piece[0] + "P";
+
+                let canAttack = isHidden
+                  ? this.validateGeometry(
+                      fakeType,
+                      sq,
+                      myKingSq,
+                      boardState,
+                      false,
+                    )
+                  : this.validateGeometry(
+                      piece,
+                      sq,
+                      myKingSq,
+                      boardState,
+                      true,
+                    );
+
+                if (canAttack) return false;
+              }
+            }
+
+            return true;
+          },
+
           processMove(source, target, piece, boardState, updateUI = false) {
-            let isHidden = piece[1] === "X"; // Detects "rX" or "bX"
-            let validMove = isHidden
+            let isHidden = piece[1] === "X";
+
+            let fakeType = this.originalSquares[source]
+              ? piece[0] + this.originalSquares[source][1]
+              : piece[0] + "P";
+
+            let validGeometry = isHidden
               ? this.validateGeometry(
-                  this.originalSquares[source] || piece[0] + "P",
+                  fakeType,
                   source,
                   target,
+                  boardState,
+                  false,
                 )
-              : this.validateGeometry(piece, source, target);
+              : this.validateGeometry(piece, source, target, boardState, true);
 
-            if (validMove && updateUI) {
+            if (!validGeometry) return false;
+
+            let simulatedState = this.simulateMove(boardState, {
+              from: source,
+              to: target,
+              piece: piece,
+            });
+
+            let enemyColor = piece[0] === "r" ? "b" : "r";
+            let enemyKingSq = Object.keys(simulatedState).find(
+              (k) => simulatedState[k] === enemyColor + "K",
+            );
+
+            if (
+              enemyKingSq &&
+              !this.isBoardStateValid(piece[0], simulatedState)
+            ) {
+              if (updateUI) {
+                Swal.fire({
+                  title: "Nước đi không hợp lệ",
+                  text: "Bạn không thể tự chiếu tướng hoặc để 2 Tướng đối mặt nhau!",
+                  icon: "warning",
+                  toast: true,
+                  position: "top",
+                  timer: 2000,
+                  showConfirmButton: false,
+                });
+              }
+              return false;
+            }
+
+            if (updateUI) {
               if (isHidden) {
                 let realPiece = this.hiddenPieces[source];
                 delete this.hiddenPieces[source];
@@ -363,10 +537,10 @@
                 }, 150);
               }
             }
-            return validMove;
+            return true;
           },
 
-          validateGeometry(pieceType, source, target) {
+          validateGeometry(pieceType, source, target, boardState, isRevealed) {
             const fileMap = {
               a: 0,
               b: 1,
@@ -378,6 +552,18 @@
               h: 7,
               i: 8,
             };
+            const reverseFileMap = [
+              "a",
+              "b",
+              "c",
+              "d",
+              "e",
+              "f",
+              "g",
+              "h",
+              "i",
+            ];
+
             let x1 = fileMap[source[0]],
               y1 = parseInt(source[1]);
             let x2 = fileMap[target[0]],
@@ -385,16 +571,100 @@
             let dx = Math.abs(x2 - x1);
             let dy = Math.abs(y2 - y1);
 
-            // Grabs the exact piece type letter (e.g. "R" from "rR")
+            let color = pieceType[0];
             let type = pieceType[1].toLowerCase();
 
-            if (type === "r" || type === "c") return dx === 0 || dy === 0;
-            if (type === "n")
-              return (dx === 1 && dy === 2) || (dx === 2 && dy === 1);
-            if (type === "b") return dx === 2 && dy === 2;
-            if (type === "a") return dx === 1 && dy === 1;
-            if (type === "k") return dx + dy === 1;
-            if (type === "p") return dx + dy === 1;
+            const countPiecesBetween = () => {
+              let count = 0;
+              if (x1 === x2) {
+                let min = Math.min(y1, y2),
+                  max = Math.max(y1, y2);
+                for (let y = min + 1; y < max; y++) {
+                  if (boardState[reverseFileMap[x1] + y]) count++;
+                }
+              } else if (y1 === y2) {
+                let min = Math.min(x1, x2),
+                  max = Math.max(x1, x2);
+                for (let x = min + 1; x < max; x++) {
+                  if (boardState[reverseFileMap[x] + y1]) count++;
+                }
+              }
+              return count;
+            };
+
+            if (type === "r") {
+              if (dx !== 0 && dy !== 0) return false;
+              return countPiecesBetween() === 0;
+            }
+
+            if (type === "c") {
+              if (dx !== 0 && dy !== 0) return false;
+              let piecesBetween = countPiecesBetween();
+              if (boardState[target]) {
+                return piecesBetween === 1;
+              } else {
+                return piecesBetween === 0;
+              }
+            }
+
+            if (type === "n") {
+              if (!((dx === 1 && dy === 2) || (dx === 2 && dy === 1)))
+                return false;
+              if (dx === 2) {
+                let hobbleX = x1 + (x2 > x1 ? 1 : -1);
+                if (boardState[reverseFileMap[hobbleX] + y1]) return false;
+              } else {
+                let hobbleY = y1 + (y2 > y1 ? 1 : -1);
+                if (boardState[reverseFileMap[x1] + hobbleY]) return false;
+              }
+              return true;
+            }
+
+            if (type === "b") {
+              if (dx !== 2 || dy !== 2) return false;
+              let eyeX = x1 + (x2 > x1 ? 1 : -1);
+              let eyeY = y1 + (y2 > y1 ? 1 : -1);
+              if (boardState[reverseFileMap[eyeX] + eyeY]) return false;
+
+              if (!isRevealed) {
+                if (color === "r" && y2 > 4) return false;
+                if (color === "b" && y2 < 5) return false;
+              }
+              return true;
+            }
+
+            if (type === "a") {
+              if (dx !== 1 || dy !== 1) return false;
+              if (!isRevealed) {
+                if (x2 < 3 || x2 > 5) return false;
+                if (color === "r" && y2 > 2) return false;
+                if (color === "b" && y2 < 7) return false;
+              }
+              return true;
+            }
+
+            if (type === "k") {
+              if (dx + dy !== 1) return false;
+              if (x2 < 3 || x2 > 5) return false;
+              if (color === "r" && y2 > 2) return false;
+              if (color === "b" && y2 < 7) return false;
+              return true;
+            }
+
+            if (type === "p") {
+              let forwardDir = color === "r" ? 1 : -1;
+              let hasCrossedRiver = color === "r" ? y1 >= 5 : y1 <= 4;
+              let canMoveLaterally = isRevealed || hasCrossedRiver;
+
+              if (canMoveLaterally) {
+                if (dy === 1 && dx === 0) return y2 - y1 === forwardDir;
+                if (dx === 1 && dy === 0) return true;
+                return false;
+              } else {
+                return dx === 0 && y2 - y1 === forwardDir;
+              }
+            }
+
             return false;
           },
 
@@ -451,6 +721,7 @@
               currentColor,
               boardState,
             );
+
             if (possibleMoves.length === 0)
               return isMaximizingPlayer ? -9999 : 9999;
 
@@ -497,7 +768,6 @@
           },
 
           evaluateBoard(boardState) {
-            // Re-mapped piece values matching 2-character identifiers
             const PIECE_VALUES = {
               bK: 10000,
               bR: 900,
@@ -531,51 +801,97 @@
             files.forEach((f) => ranks.forEach((r) => allSquares.push(f + r)));
 
             const mySquares = Object.keys(boardState).filter((sq) => {
-              return boardState[sq][0] === color; // 'r' or 'b'
+              return boardState[sq][0] === color;
             });
 
             mySquares.forEach((fromSq) => {
               let piece = boardState[fromSq];
               let isHidden = piece[1] === "X";
 
+              let fakeType = this.originalSquares[fromSq]
+                ? piece[0] + this.originalSquares[fromSq][1]
+                : piece[0] + "P";
+
               allSquares.forEach((toSq) => {
                 if (fromSq === toSq) return;
 
                 let targetPiece = boardState[toSq];
 
-                // Block moving to a square containing our own piece
                 if (targetPiece && targetPiece[0] === color) return;
 
-                let isValid = isHidden
+                let isValidGeometry = isHidden
                   ? this.validateGeometry(
-                      this.originalSquares[fromSq] || color + "P",
+                      fakeType,
                       fromSq,
                       toSq,
+                      boardState,
+                      false,
                     )
-                  : this.validateGeometry(piece, fromSq, toSq);
+                  : this.validateGeometry(
+                      piece,
+                      fromSq,
+                      toSq,
+                      boardState,
+                      true,
+                    );
 
-                if (isValid)
-                  moves.push({ from: fromSq, to: toSq, piece: piece });
+                if (isValidGeometry) {
+                  let simulatedState = this.simulateMove(boardState, {
+                    from: fromSq,
+                    to: toSq,
+                    piece: piece,
+                  });
+                  let enemyColor = color === "r" ? "b" : "r";
+                  let enemyKingSq = Object.keys(simulatedState).find(
+                    (k) => simulatedState[k] === enemyColor + "K",
+                  );
+
+                  if (
+                    !enemyKingSq ||
+                    this.isBoardStateValid(color, simulatedState)
+                  ) {
+                    moves.push({ from: fromSq, to: toSq, piece: piece });
+                  }
+                }
               });
             });
             return moves.sort(() => Math.random() - 0.5);
           },
 
+          // --- GAME OVER VALIDATION AND UI ---
           checkWinCondition(boardState) {
+            // Condition 1: A King is physically captured
             let kings = Object.values(boardState).filter((p) => p[1] === "K");
             if (kings.length < 2) {
-              let winner = kings[0] === "rK" ? "Red" : "Black";
-              Swal.fire({
-                title: "Game Over!",
-                text: `${winner} wins the game!`,
-                icon: "success",
-                background: "#1f2937",
-                color: "#fff",
-                confirmButtonColor: "#dc2626",
-              }).then(() => this.startNewGame());
+              let winner = kings[0] === "rK" ? "Đỏ" : "Đen";
+              this.showGameOverNotification(winner, "Bắt được Tướng!");
               return true;
             }
+
+            // Condition 2: The current player has no legal moves left (Checkmate / Stalemate)
+            let possibleMoves = this.generateLegalMoves(this.turn, boardState);
+            if (possibleMoves.length === 0) {
+              let winner = this.turn === "r" ? "Đen" : "Đỏ";
+              this.showGameOverNotification(winner, "Chiếu bí / Hết nước đi!");
+              return true;
+            }
+
             return false;
+          },
+
+          showGameOverNotification(winner, reason) {
+            Swal.fire({
+              title: "Trò chơi kết thúc!",
+              html: `<span class='text-lg'>Phe <b class='${winner === "Đỏ" ? "text-red-500" : "text-gray-400"}'>${winner}</b> đã giành chiến thắng!</span><br/><br/><span class='text-sm text-gray-400'>Lý do: ${reason}</span>`,
+              icon: "success",
+              background: "#1f2937",
+              color: "#fff",
+              confirmButtonColor: "#dc2626",
+              confirmButtonText: "Chơi lại",
+              allowOutsideClick: false,
+            }).then(() => {
+              this.startNewGame();
+            });
           },
         }));
       });
