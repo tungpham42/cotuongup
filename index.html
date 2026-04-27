@@ -1346,10 +1346,40 @@
 
           showGameOverNotification(winner, reason) {
             const colors = this.getSwalColors();
+
+            // Icon SVG cho PvP (Ngôi sao)
+            const starIcon = `<svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 mr-3 text-rose-500" viewBox="0 0 20 20" fill="currentColor"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>`;
+
+            // Icon SVG cho Cúp (Khi người chơi thắng AI)
+            const trophyIcon = `<svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 mr-3 text-yellow-500" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M8 21l8 0" /><path d="M12 17l0 4" /><path d="M7 4l10 0" /><path d="M17 4v8a5 5 0 0 1 -10 0v-8" /><path d="M5 9m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /><path d="M19 9m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /></svg>`;
+
+            // Icon SVG Robot (Khi máy tính thắng)
+            const robotIcon = `<svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 mr-3 text-slate-500 dark:text-slate-400" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M6 8m0 2a2 2 0 0 1 2 -2h8a2 2 0 0 1 2 2v8a2 2 0 0 1 -2 2h-8a2 2 0 0 1 -2 -2z" /><path d="M2 14l4 0" /><path d="M22 14l-4 0" /><path d="M12 2v2" /><path d="M9 13l0 .01" /><path d="M15 13l0 .01" /><path d="M9 17l6 0" /></svg>`;
+
+            // Thiết lập thông báo mặc định cho chế độ 2 người chơi (PvP)
+            let titleHtml = `<div class="flex items-center justify-center">${starIcon}Kết thúc trận đấu!</div>`;
+            let icon = "success";
+            let messageHtml = `<span class='text-lg font-medium'>Phe <b class='${winner === "Đỏ" ? "text-rose-500" : "text-slate-500 dark:text-slate-300"}'>${winner}</b> đã giành chiến thắng!</span>`;
+
+            // Tùy chỉnh thông báo riêng cho chế độ chơi với máy (PvE)
+            if (this.gameMode === "pve") {
+              if (winner === "Đỏ") {
+                // Người chơi thắng AI
+                titleHtml = `<div class="flex items-center justify-center">${trophyIcon}Chúc mừng!</div>`;
+                icon = "success";
+                messageHtml = `<span class='text-lg font-medium text-emerald-500'>Tuyệt vời! Bạn đã xuất sắc đánh bại AI!</span>`;
+              } else {
+                // AI thắng người chơi
+                titleHtml = `<div class="flex items-center justify-center">${robotIcon}Máy tính thắng!</div>`;
+                icon = "info";
+                messageHtml = `<span class='text-lg font-medium text-rose-500'>Rất tiếc! AI đã đánh bại bạn ở ván này!</span>`;
+              }
+            }
+
             Swal.fire({
-              title: "🎉 Kết thúc trận đấu!",
-              html: `<div class='mt-2'><span class='text-lg font-medium'>Phe <b class='${winner === "Đỏ" ? "text-rose-500" : "text-slate-500 dark:text-slate-300"}'>${winner}</b> đã giành chiến thắng!</span><br/><br/><span class='text-sm text-slate-500 dark:text-slate-400'>Lý do: ${reason}</span></div>`,
-              icon: "success",
+              title: titleHtml,
+              html: `<div class='mt-2'>${messageHtml}<br/><br/><span class='text-sm text-slate-500 dark:text-slate-400'>Lý do: ${reason}</span></div>`,
+              icon: icon,
               background: colors.background,
               color: colors.color,
               confirmButtonColor: "#f43f5e",
