@@ -1087,7 +1087,7 @@
             if (type === "p") {
               let forwardDir = color === "r" ? 1 : -1;
               let hasCrossedRiver = color === "r" ? y1 >= 5 : y1 <= 4;
-              let canMoveLaterally = isRevealed || hasCrossedRiver;
+              let canMoveLaterally = hasCrossedRiver; // Xóa bỏ điều kiện isRevealed
 
               if (canMoveLaterally) {
                 if (dy === 1 && dx === 0) return y2 - y1 === forwardDir;
