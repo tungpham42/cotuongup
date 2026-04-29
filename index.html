@@ -1,12 +1,37 @@
 <!doctype html>
 <html
   lang="vi"
-  x-data="{ darkMode: localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches) }"
+  x-data="{
+    darkMode: document.documentElement.classList.contains('dark'),
+    initTheme() {
+      // Lưu lựa chọn của người dùng khi họ bấm nút
+      this.$watch('darkMode', val => localStorage.setItem('theme', val ? 'dark' : 'light'));
+      
+      // Lắng nghe thay đổi Dark/Light mode trực tiếp từ hệ điều hành
+      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+        // Chỉ tự đổi theo OS nếu người dùng chưa từng ép buộc lưu theme
+        if (!localStorage.getItem('theme')) {
+          this.darkMode = e.matches;
+        }
+      });
+    }
+  }"
   :class="{ 'dark': darkMode }"
-  x-init="$watch('darkMode', val => localStorage.setItem('theme', val ? 'dark' : 'light'))"
+  x-init="initTheme()"
 >
   <head>
     <meta charset="UTF-8" />
+    <script>
+      if (
+        localStorage.getItem("theme") === "dark" ||
+        (!("theme" in localStorage) &&
+          window.matchMedia("(prefers-color-scheme: dark)").matches)
+      ) {
+        document.documentElement.classList.add("dark");
+      } else {
+        document.documentElement.classList.remove("dark");
+      }
+    </script>
     <meta
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
