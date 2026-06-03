@@ -4,12 +4,8 @@
   x-data="{
     darkMode: document.documentElement.classList.contains('dark'),
     initTheme() {
-      // Lưu lựa chọn của người dùng khi họ bấm nút
       this.$watch('darkMode', val => localStorage.setItem('theme', val ? 'dark' : 'light'));
-      
-      // Lắng nghe thay đổi Dark/Light mode trực tiếp từ hệ điều hành
       window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
-        // Chỉ tự đổi theo OS nếu người dùng chưa từng ép buộc lưu theme
         if (!localStorage.getItem('theme')) {
           this.darkMode = e.matches;
         }
@@ -41,51 +37,26 @@
       name="description"
       content="Trò chơi Cờ Úp với AI sử dụng thuật toán thông minh. Chơi ngay để thử thách trí tuệ của bạn!"
     />
-    <meta
-      name="keywords"
-      content="Cờ Úp, Xiangqi, Chinese Chess, Minimax, Alpha-Beta Pruning, Game AI, JavaScript Game"
-    />
-    <meta name="author" content="Tùng Phạm" />
-    <meta property="og:title" content="Cờ Úp - Trải nghiệm tuyệt vời" />
-    <meta
-      property="og:description"
-      content="Trò chơi Cờ Úp với AI sử dụng thuật toán thông minh. Chơi ngay để thử thách trí tuệ của bạn!"
-    />
-    <meta
-      property="og:image"
-      content="https://coup.cotuong.top/assets/images/1200x630.jpg"
-    />
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://coup.cotuong.top" />
-    <title>Cờ Úp</title>
+    <title>Cờ Úp - Multiplayer</title>
     <link
       rel="icon"
       type="image/svg+xml"
       href="https://coup.cotuong.top/assets/images/favicon.svg"
     />
-
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
         darkMode: "class",
         theme: {
           extend: {
-            fontFamily: {
-              sans: ['"Plus Jakarta Sans"', "sans-serif"],
-            },
-            colors: {
-              board: {
-                light: "#E8CBAA",
-                dark: "#8B5A2B",
-              },
-            },
+            fontFamily: { sans: ['"Plus Jakarta Sans"', "sans-serif"] },
+            colors: { board: { light: "#E8CBAA", dark: "#8B5A2B" } },
             boxShadow: {
               soft: "0 10px 40px -10px rgba(0,0,0,0.08)",
               softDark: "0 10px 40px -10px rgba(0,0,0,0.5)",
@@ -94,37 +65,15 @@
         },
       };
     </script>
-
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link
       rel="stylesheet"
       href="https://coup.cotuong.top/assets/xiangqiboard.css"
     />
-
     <script
       defer
       src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"
     ></script>
-
-    <script
-      async
-      src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3585118770961536"
-      crossorigin="anonymous"
-    ></script>
-    <!-- Global site tag (gtag.js) - Google Analytics -->
-    <script
-      async
-      src="https://www.googletagmanager.com/gtag/js?id=G-QEW6K9YPY7"
-    ></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag() {
-        dataLayer.push(arguments);
-      }
-      gtag("js", new Date());
-
-      gtag("config", "G-QEW6K9YPY7");
-    </script>
 
     <style>
       .hidden-piece {
@@ -136,7 +85,9 @@
         width: 100%;
         max-width: 500px;
         margin: 0 auto;
-        position: relative; /* Chuẩn bị cho lớp nền SVG */
+        position: relative;
+        background-image: none !important;
+        border: none !important;
       }
       body {
         transition:
@@ -147,31 +98,19 @@
         backdrop-filter: blur(12px);
         -webkit-backdrop-filter: blur(12px);
       }
-
-      /* --- CHỈNH SỬA CURSOR POINTER --- */
       .square-2b8ce {
-        cursor: default !important; /* Mặc định các ô cờ trống là trỏ chuột bình thường */
-        z-index: 1; /* Đảm bảo ô cờ nổi lên trên lớp SVG */
+        cursor: default !important;
+        z-index: 1;
       }
-
       .piece-1e8b9,
       .valid-move-dot,
       .valid-move-capture {
-        cursor: pointer !important; /* Chỉ hiện bàn tay khi trỏ vào quân cờ hoặc chấm gợi ý */
+        cursor: pointer !important;
       }
-
       .highlight1-e13fc {
         box-shadow: inset 0 0 0 4px rgba(244, 63, 94, 0.8) !important;
         border-radius: 4px;
       }
-
-      /* --- SỬ DỤNG TRỰC TIẾP SVG LÀM BACKGROUND (KHÔNG DÙNG MASK) --- */
-      #board {
-        background-image: none !important; /* Xóa hình nền tĩnh của thư viện để gắn vào ::before */
-        border: none !important; /* Tuyệt đối không dùng border CSS để tránh nét đôi */
-      }
-
-      /* CSS Hiển thị nước đi khả thi */
       .valid-move-dot {
         position: relative;
       }
@@ -231,7 +170,6 @@
             >
           </p>
         </div>
-
         <button
           @click="darkMode = !darkMode"
           class="p-2.5 rounded-2xl bg-white dark:bg-slate-800 shadow-sm border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 transition-all hover:scale-105 active:scale-95"
@@ -272,33 +210,28 @@
       </header>
 
       <div
-        class="bg-white/80 dark:bg-slate-800/80 glass-panel shadow-soft dark:shadow-softDark rounded-3xl p-4 md:p-5 mb-8 flex flex-col sm:flex-row gap-4 items-center justify-between border border-slate-100 dark:border-slate-700/50"
+        class="bg-white/80 dark:bg-slate-800/80 glass-panel shadow-soft dark:shadow-softDark rounded-3xl p-4 md:p-5 mb-8 flex flex-col lg:flex-row gap-4 items-center justify-between border border-slate-100 dark:border-slate-700/50"
       >
         <div
-          class="flex flex-col sm:flex-row gap-4 w-full sm:w-auto items-center"
+          class="flex flex-col sm:flex-row gap-4 w-full lg:w-auto items-center"
         >
           <button
             @click="startNewGame()"
-            class="w-full sm:w-auto bg-rose-500 hover:bg-rose-600 text-white font-semibold py-2.5 px-6 rounded-2xl shadow-sm hover:shadow-md transition-all active:scale-95 flex items-center justify-center gap-2"
+            class="w-full sm:w-auto bg-rose-500 hover:bg-rose-600 text-white font-semibold py-2.5 px-6 rounded-2xl shadow-sm hover:shadow-md transition-all active:scale-95 flex items-center justify-center gap-2 whitespace-nowrap"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="h-5 w-5"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-            >
-              <path
-                fill-rule="evenodd"
-                d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z"
-                clip-rule="evenodd"
-              />
-            </svg>
-            Chơi lại
+            Chơi lại / Kết nối
           </button>
 
           <div
-            class="flex bg-slate-100 dark:bg-slate-900 rounded-xl p-1.5 w-full sm:w-auto shadow-inner"
+            class="flex bg-slate-100 dark:bg-slate-900 rounded-xl p-1.5 w-full sm:w-auto shadow-inner overflow-x-auto"
           >
+            <button
+              @click="setMode('online')"
+              :class="gameMode === 'online' ? 'bg-white dark:bg-slate-700 text-slate-800 dark:text-white shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'"
+              class="flex-1 sm:flex-none px-4 py-2 rounded-lg transition-all text-sm font-semibold whitespace-nowrap"
+            >
+              Online
+            </button>
             <button
               @click="setMode('pvp')"
               :class="gameMode === 'pvp' ? 'bg-white dark:bg-slate-700 text-slate-800 dark:text-white shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'"
@@ -316,32 +249,96 @@
           </div>
         </div>
 
-        <div
-          class="bg-slate-50 dark:bg-slate-900 px-5 py-2.5 rounded-2xl flex items-center justify-center gap-3 shadow-inner w-full sm:w-auto border border-slate-100 dark:border-slate-800"
-        >
-          <span class="text-sm font-medium text-slate-400">Lượt đi:</span>
-          <div class="flex items-center gap-2">
-            <div
-              class="w-3 h-3 rounded-full transition-colors"
-              :class="turn === 'r' ? 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.6)]' : 'bg-slate-800 dark:bg-slate-300'"
-            ></div>
+        <div class="flex flex-col sm:flex-row gap-4 w-full lg:w-auto">
+          <div
+            x-show="gameMode === 'online' && onlineGameId"
+            class="bg-blue-50 dark:bg-blue-900/30 px-5 py-2.5 rounded-2xl flex items-center justify-center gap-2 border border-blue-100 dark:border-blue-800"
+          >
+            <span class="text-sm font-medium text-slate-500 dark:text-slate-400"
+              >Phòng:</span
+            >
             <span
-              x-text="turn === 'r' ? 'Đỏ' : 'Đen'"
-              :class="turn === 'r' ? 'text-rose-500' : 'text-slate-800 dark:text-slate-200'"
-              class="font-bold tracking-wide"
+              x-text="onlineGameId"
+              class="text-blue-600 dark:text-blue-400 font-bold tracking-wider"
             ></span>
+          </div>
+
+          <div
+            class="bg-slate-50 dark:bg-slate-900 px-5 py-2.5 rounded-2xl flex items-center justify-center gap-3 shadow-inner border border-slate-100 dark:border-slate-800 w-full sm:w-auto"
+          >
+            <span class="text-sm font-medium text-slate-400">Lượt đi:</span>
+            <div class="flex items-center gap-2">
+              <div
+                class="w-3 h-3 rounded-full transition-colors"
+                :class="turn === 'r' ? 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.6)]' : 'bg-slate-800 dark:bg-slate-300'"
+              ></div>
+              <span
+                x-text="turn === 'r' ? 'Đỏ' : 'Đen'"
+                :class="turn === 'r' ? 'text-rose-500' : 'text-slate-800 dark:text-slate-200'"
+                class="font-bold tracking-wide"
+              ></span>
+            </div>
           </div>
         </div>
       </div>
 
       <div class="flex-1 flex justify-center items-start">
         <div
-          class="bg-white dark:bg-slate-800 p-2 sm:p-4 rounded-[2rem] shadow-xl relative w-full max-w-[530px] mx-auto"
+          class="bg-white dark:bg-slate-800 p-2 sm:p-4 rounded-[2rem] shadow-xl relative w-full max-w-[530px] mx-auto overflow-hidden"
         >
+          <!-- LỚP OVERLAY SẢNH CHỜ -->
+          <div
+            x-show="gameMode === 'online' && onlineGameStatus === 'waiting'"
+            x-transition.opacity
+            class="absolute inset-0 z-40 bg-white/95 dark:bg-slate-900/95 flex flex-col items-center justify-center backdrop-blur-md"
+            style="display: none"
+          >
+            <h2 class="text-2xl font-bold text-rose-500 mb-2">Sảnh Chờ</h2>
+            <p class="text-slate-600 dark:text-slate-300 mb-6 text-center px-4">
+              Đang chờ đối thủ tham gia phòng...
+            </p>
+            <div
+              class="bg-slate-100 dark:bg-slate-800 px-6 py-4 rounded-xl border border-slate-200 dark:border-slate-700 mb-8 text-center shadow-inner"
+            >
+              <span class="text-sm font-medium text-slate-500 block mb-1"
+                >Tên / ID Phòng của bạn:</span
+              >
+              <span
+                x-text="onlineGameId"
+                class="text-2xl font-mono font-bold text-slate-800 dark:text-slate-100 tracking-wider"
+              ></span>
+            </div>
+            <div
+              class="flex items-center gap-3 text-sm font-medium text-slate-500 dark:text-slate-400"
+            >
+              <svg
+                class="animate-spin h-5 w-5 text-rose-500"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  class="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  stroke-width="4"
+                ></circle>
+                <path
+                  class="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
+              </svg>
+              Đang đợi kết nối...
+            </div>
+          </div>
+
           <div
             x-show="isThinking"
             x-transition.opacity
-            class="absolute inset-0 z-50 bg-white/60 dark:bg-slate-900/60 flex items-center justify-center rounded-[2rem] backdrop-blur-sm"
+            class="absolute inset-0 z-50 bg-white/60 dark:bg-slate-900/60 flex items-center justify-center backdrop-blur-sm"
             style="display: none"
           >
             <div
@@ -368,7 +365,7 @@
                 ></path>
               </svg>
               <span class="text-slate-700 dark:text-slate-200 font-bold text-lg"
-                >AI đang nghĩ...</span
+                >Đang xử lý...</span
               >
             </div>
           </div>
@@ -386,6 +383,8 @@
     <script src="https://coup.cotuong.top/assets/xiangqiboard.js"></script>
 
     <script>
+      const API_BASE_URL = "https://coup.soft.io.vn/api";
+
       document.addEventListener("alpine:init", () => {
         Alpine.data("xiangqiGame", () => ({
           board: null,
@@ -394,8 +393,13 @@
           gameMode: "pve",
           isThinking: false,
           checkCount: { r: 0, b: 0 },
-
           selectedSquare: null,
+
+          // MULTIPLAYER VARIABLES
+          onlineGameId: null,
+          onlineGameStatus: null, // MỚI: 'waiting', 'playing', 'finished'
+          myPlayerColor: null,
+          pollingInterval: null,
 
           startPosition: {
             a9: "bX",
@@ -431,7 +435,6 @@
             g3: "rX",
             i3: "rX",
           },
-
           originalSquares: {
             a9: "bR",
             b9: "bN",
@@ -475,7 +478,6 @@
             };
           },
 
-          // --- [THÊM MỚI] BỘ TỔNG HỢP ÂM THANH WEB AUDIO API ---
           playSound(type) {
             try {
               if (!window.audioCtx) {
@@ -483,9 +485,8 @@
                   window.AudioContext || window.webkitAudioContext
                 )();
               }
-              if (window.audioCtx.state === "suspended") {
+              if (window.audioCtx.state === "suspended")
                 window.audioCtx.resume();
-              }
 
               const t = window.audioCtx.currentTime;
               const osc = window.audioCtx.createOscillator();
@@ -494,7 +495,6 @@
               gain.connect(window.audioCtx.destination);
 
               if (type === "move") {
-                // Âm thanh đi cờ: Tiếng gõ trầm ngắn
                 osc.type = "sine";
                 osc.frequency.setValueAtTime(300, t);
                 osc.frequency.exponentialRampToValueAtTime(40, t + 0.08);
@@ -503,7 +503,6 @@
                 osc.start(t);
                 osc.stop(t + 0.08);
               } else if (type === "capture") {
-                // Âm thanh ăn quân: Tiếng gõ vang hơn, đanh hơn
                 osc.type = "triangle";
                 osc.frequency.setValueAtTime(400, t);
                 osc.frequency.exponentialRampToValueAtTime(50, t + 0.12);
@@ -512,7 +511,6 @@
                 osc.start(t);
                 osc.stop(t + 0.12);
               } else if (type === "check") {
-                // Âm thanh chiếu tướng: Chuông đôi cảnh báo
                 osc.type = "sine";
                 osc.frequency.setValueAtTime(600, t);
                 gain.gain.setValueAtTime(0.4, t);
@@ -531,7 +529,6 @@
                 osc2.start(t + 0.1);
                 osc2.stop(t + 0.5);
               } else if (type === "win") {
-                // Âm thanh Thắng / Chiếu bí: Chuỗi nốt cao đi lên vui tươi
                 const notes = [440, 554, 659, 880];
                 notes.forEach((freq, i) => {
                   const o = window.audioCtx.createOscillator();
@@ -546,7 +543,6 @@
                   o.stop(t + i * 0.15 + 0.5);
                 });
               } else if (type === "lose") {
-                // Âm thanh Thua / Chiếu bí: Chuỗi nốt trầm đi xuống buồn bã
                 const notes = [440, 415, 392, 349];
                 notes.forEach((freq, i) => {
                   const o = window.audioCtx.createOscillator();
@@ -583,16 +579,40 @@
             });
 
             window.addEventListener("resize", () => {
-              if (this.board) {
-                this.board.resize();
-              }
+              if (this.board) this.board.resize();
             });
 
             this.startNewGame();
           },
 
-          handleSquareClick(square) {
+          async handleSquareClick(square) {
             if (this.isThinking) return;
+
+            // Khóa click khi đang ở sảnh chờ Online
+            if (
+              this.gameMode === "online" &&
+              this.onlineGameStatus === "waiting"
+            ) {
+              return;
+            }
+
+            // Turn validation depending on game mode
+            if (
+              this.gameMode === "online" &&
+              this.turn !== this.myPlayerColor
+            ) {
+              Swal.fire({
+                title: "Chưa tới lượt!",
+                icon: "warning",
+                toast: true,
+                position: "top",
+                timer: 1500,
+                showConfirmButton: false,
+                background: this.getSwalColors().background,
+                color: this.getSwalColors().color,
+              });
+              return;
+            }
             if (this.gameMode === "pve" && this.turn === "b") return;
 
             const pos = this.board.position();
@@ -623,9 +643,54 @@
             }
 
             const sourcePiece = pos[source];
-            // [THÊM MỚI] Ghi nhớ trước xem ô đang nhấn có chứa quân địch không để phát âm thanh ăn quân
             const isCapture = pos[square] && pos[square][0] !== this.turn;
 
+            // --- ONLINE MULTIPLAYER LOGIC ---
+            if (this.gameMode === "online") {
+              this.isThinking = true;
+              try {
+                const response = await fetch(`${API_BASE_URL}/game-move`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    gameId: this.onlineGameId,
+                    from: source,
+                    to: square,
+                    player: this.myPlayerColor,
+                  }),
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                  this.board.position(data.newFen);
+                  this.turn = data.nextTurn;
+                  if (isCapture) this.playSound("capture");
+                  else this.playSound("move");
+                } else {
+                  Swal.fire({
+                    title: "Nước đi không hợp lệ",
+                    text: data.message,
+                    icon: "warning",
+                    toast: true,
+                    position: "top",
+                    timer: 1500,
+                    showConfirmButton: false,
+                    background: this.getSwalColors().background,
+                    color: this.getSwalColors().color,
+                  });
+                }
+              } catch (error) {
+                console.error("Network Error:", error);
+              } finally {
+                this.isThinking = false;
+                this.selectedSquare = null;
+                this.clearHighlights();
+              }
+              return;
+            }
+
+            // --- LOCAL PVP / PVE LOGIC ---
             let validMove = this.processMove(
               source,
               square,
@@ -633,7 +698,6 @@
               pos,
               true,
             );
-
             if (validMove) {
               this.board.move(`${source}-${square}`);
               this.selectedSquare = null;
@@ -641,19 +705,14 @@
 
               this.turn = this.turn === "r" ? "b" : "r";
 
-              // [THÊM MỚI] Đánh giá bảng cờ sau nước đi để phát ra âm thanh phù hợp
               const newState = this.board.position();
               const isGameOver = this.checkWinCondition(newState);
 
               if (!isGameOver) {
                 const isCheck = !this.isBoardStateValid(this.turn, newState);
-                if (isCheck) {
-                  this.playSound("check");
-                } else if (isCapture) {
-                  this.playSound("capture");
-                } else {
-                  this.playSound("move");
-                }
+                if (isCheck) this.playSound("check");
+                else if (isCapture) this.playSound("capture");
+                else this.playSound("move");
               }
 
               if (this.gameMode === "pve" && this.turn === "b" && !isGameOver) {
@@ -710,36 +769,212 @@
             this.startNewGame();
           },
 
-          startNewGame() {
+          async startNewGame() {
             this.turn = "r";
             this.isThinking = false;
             this.checkCount = { r: 0, b: 0 };
-
             this.selectedSquare = null;
             this.clearHighlights();
 
-            this.shufflePieces();
-            this.board.position(this.startPosition);
-
-            setTimeout(() => {
-              this.board.resize();
-            }, 100);
+            // Clear online polling if switching modes
+            if (this.pollingInterval) {
+              clearInterval(this.pollingInterval);
+              this.pollingInterval = null;
+            }
+            this.onlineGameId = null;
+            this.onlineGameStatus = null;
 
             const colors = this.getSwalColors();
-            Swal.fire({
-              title: "Trò chơi bắt đầu",
-              text:
-                this.gameMode === "pve"
-                  ? "Bạn cầm quân Đỏ. Chúc may mắn!"
-                  : "Chế độ 2 người chơi",
-              icon: "info",
-              background: colors.background,
-              color: colors.color,
-              timer: 1500,
-              showConfirmButton: false,
-              toast: true,
-              position: "top",
-            });
+
+            // --- MULTIPLAYER SETUP ---
+            if (this.gameMode === "online") {
+              const result = await Swal.fire({
+                title: "Chế độ Online",
+                text: "Bạn muốn tạo phòng mới hay tham gia phòng đã có?",
+                icon: "question",
+                showDenyButton: true,
+                showCancelButton: true,
+                confirmButtonText: "Tạo Phòng Mới",
+                denyButtonText: "Vào Phòng",
+                cancelButtonText: "Hủy",
+                background: colors.background,
+                color: colors.color,
+              });
+
+              if (result.isConfirmed) {
+                // Nhập tên phòng tùy chọn
+                const { value: customRoomName } = await Swal.fire({
+                  title: "Tạo phòng mới",
+                  text: "Nhập tên hoặc ID phòng bạn muốn (để trống để tạo mã ngẫu nhiên)",
+                  input: "text",
+                  inputPlaceholder: "Ví dụ: PhongCuaToi",
+                  showCancelButton: true,
+                  confirmButtonText: "Tạo Phòng",
+                  cancelButtonText: "Hủy",
+                  background: colors.background,
+                  color: colors.color,
+                });
+
+                // User cancelled input
+                if (customRoomName === undefined) {
+                  this.setMode("pvp");
+                  return;
+                }
+
+                this.isThinking = true;
+                try {
+                  const res = await fetch(`${API_BASE_URL}/game-create`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    // Gửi customRoomName lên API, nếu trống nó sẽ lấy undefined/null
+                    body: JSON.stringify({ customId: customRoomName || null }),
+                  });
+                  const data = await res.json();
+
+                  this.onlineGameId = data.gameId; // Lưu ID/Tên phòng trả về
+                  this.myPlayerColor = "r";
+                  this.onlineGameStatus = "waiting"; // Chuyển sang Sảnh chờ
+                  this.board.position(data.fen);
+                  this.startPolling();
+                } catch (e) {
+                  Swal.fire({
+                    title: "Lỗi",
+                    text: "Không thể kết nối tới máy chủ.",
+                    icon: "error",
+                    background: colors.background,
+                    color: colors.color,
+                  });
+                }
+                this.isThinking = false;
+              } else if (result.isDenied) {
+                const { value: gameId } = await Swal.fire({
+                  title: "Nhập Tên / ID Phòng",
+                  input: "text",
+                  showCancelButton: true,
+                  confirmButtonText: "Vào Phòng",
+                  background: colors.background,
+                  color: colors.color,
+                });
+
+                if (gameId) {
+                  this.isThinking = true;
+                  try {
+                    const res = await fetch(`${API_BASE_URL}/game-join`, {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ gameId }),
+                    });
+                    const data = await res.json();
+                    if (data.error) throw new Error(data.error);
+
+                    this.onlineGameId = data.gameId;
+                    this.myPlayerColor = "b"; // Joiner plays Black
+                    this.onlineGameStatus = "playing"; // Vào phòng thành công -> Chơi luôn
+                    this.board.position(data.fen);
+                    this.startPolling();
+                    Swal.fire({
+                      title: "Thành công",
+                      text: `Đã vào phòng ${gameId}`,
+                      icon: "success",
+                      toast: true,
+                      position: "top",
+                      timer: 2000,
+                      background: colors.background,
+                      color: colors.color,
+                    });
+                  } catch (e) {
+                    Swal.fire({
+                      title: "Lỗi",
+                      text:
+                        e.message || "Không tìm thấy phòng hoặc phòng đã đầy",
+                      icon: "error",
+                      background: colors.background,
+                      color: colors.color,
+                    });
+                    this.onlineGameId = null;
+                  }
+                  this.isThinking = false;
+                } else {
+                  // User cancelled
+                  this.setMode("pvp");
+                }
+              } else {
+                this.setMode("pvp");
+              }
+            } else {
+              // Local setup (PvP / PvE)
+              this.myPlayerColor = "r";
+              this.shufflePieces();
+              this.board.position(this.startPosition);
+
+              Swal.fire({
+                title: "Trò chơi bắt đầu",
+                text:
+                  this.gameMode === "pve"
+                    ? "Bạn cầm quân Đỏ. Chúc may mắn!"
+                    : "Chế độ 2 người chơi cục bộ",
+                icon: "info",
+                background: colors.background,
+                color: colors.color,
+                timer: 1500,
+                showConfirmButton: false,
+                toast: true,
+                position: "top",
+              });
+            }
+
+            setTimeout(() => {
+              if (this.board) this.board.resize();
+            }, 100);
+          },
+
+          // --- ONLINE SYNC (POLLING) ---
+          startPolling() {
+            this.pollingInterval = setInterval(async () => {
+              if (!this.onlineGameId) return;
+              try {
+                const response = await fetch(
+                  `${API_BASE_URL}/game-status?id=${this.onlineGameId}`,
+                );
+                const data = await response.json();
+
+                // Cập nhật trạng thái phòng (để đóng màn hình Sảnh Chờ)
+                if (
+                  data.status === "playing" &&
+                  this.onlineGameStatus === "waiting"
+                ) {
+                  this.onlineGameStatus = "playing";
+                  Swal.fire({
+                    title: "Đối thủ đã vào!",
+                    text: "Trận đấu bắt đầu",
+                    icon: "success",
+                    toast: true,
+                    position: "top",
+                    timer: 3000,
+                    background: this.getSwalColors().background,
+                    color: this.getSwalColors().color,
+                  });
+                }
+
+                if (data.fen && data.fen !== this.board.fen()) {
+                  this.board.position(data.fen);
+                  this.playSound("move");
+                }
+
+                this.turn = data.turn;
+
+                if (data.status === "finished") {
+                  clearInterval(this.pollingInterval);
+                  const winner = data.turn === "r" ? "Đen" : "Đỏ";
+                  this.showGameOverNotification(
+                    winner,
+                    "Đối thủ đã kết thúc trận đấu",
+                  );
+                }
+              } catch (e) {
+                console.error("Polling error", e);
+              }
+            }, 2000);
           },
 
           shufflePieces() {
@@ -778,7 +1013,6 @@
               "bP",
             ];
             const shuffle = (array) => array.sort(() => Math.random() - 0.5);
-
             const shuffledRed = shuffle(redPool);
             const shuffledBlack = shuffle(blackPool);
 
@@ -886,7 +1120,6 @@
                 let fakeType = this.originalSquares[sq]
                   ? piece[0] + this.originalSquares[sq][1]
                   : piece[0] + "P";
-
                 let canAttack = isHidden
                   ? this.validateGeometry(
                       fakeType,
@@ -906,15 +1139,12 @@
                 if (canAttack) return false;
               }
             }
-
             return true;
           },
 
           processMove(source, target, piece, boardState, updateUI = false) {
             let targetPiece = boardState[target];
-            if (targetPiece && targetPiece[0] === piece[0]) {
-              return false;
-            }
+            if (targetPiece && targetPiece[0] === piece[0]) return false;
 
             let isHidden = piece[1] === "X";
             let fakeType = this.originalSquares[source]
@@ -938,7 +1168,6 @@
               to: target,
               piece: piece,
             });
-
             let enemyColor = piece[0] === "r" ? "b" : "r";
             let enemyKingSq = Object.keys(simulatedState).find(
               (k) => simulatedState[k] === enemyColor + "K",
@@ -988,11 +1217,8 @@
             }
 
             if (updateUI) {
-              if (isCheckingEnemy) {
-                this.checkCount[piece[0]]++;
-              } else {
-                this.checkCount[piece[0]] = 0;
-              }
+              if (isCheckingEnemy) this.checkCount[piece[0]]++;
+              else this.checkCount[piece[0]] = 0;
 
               if (isHidden) {
                 let realPiece = this.hiddenPieces[source];
@@ -1038,7 +1264,6 @@
               y2 = parseInt(target[1]);
             let dx = Math.abs(x2 - x1);
             let dy = Math.abs(y2 - y1);
-
             let color = pieceType[0];
             let type = pieceType[1].toLowerCase();
 
@@ -1047,15 +1272,13 @@
               if (x1 === x2) {
                 let min = Math.min(y1, y2),
                   max = Math.max(y1, y2);
-                for (let y = min + 1; y < max; y++) {
+                for (let y = min + 1; y < max; y++)
                   if (boardState[reverseFileMap[x1] + y]) count++;
-                }
               } else if (y1 === y2) {
                 let min = Math.min(x1, x2),
                   max = Math.max(x1, x2);
-                for (let x = min + 1; x < max; x++) {
+                for (let x = min + 1; x < max; x++)
                   if (boardState[reverseFileMap[x] + y1]) count++;
-                }
               }
               return count;
             };
@@ -1112,9 +1335,7 @@
             if (type === "p") {
               let forwardDir = color === "r" ? 1 : -1;
               let hasCrossedRiver = color === "r" ? y1 >= 5 : y1 <= 4;
-              let canMoveLaterally = hasCrossedRiver; // Xóa bỏ điều kiện isRevealed
-
-              if (canMoveLaterally) {
+              if (hasCrossedRiver) {
                 if (dy === 1 && dx === 0) return y2 - y1 === forwardDir;
                 if (dx === 1 && dy === 0) return true;
                 return false;
@@ -1147,14 +1368,12 @@
                 Infinity,
                 false,
               );
-
               if (score > bestScore) {
                 bestScore = score;
                 bestMove = move;
               }
             }
 
-            // [THÊM MỚI] Ghi nhớ xem AI có ăn quân của người chơi không
             const isCapture =
               boardState[bestMove.to] && boardState[bestMove.to][0] !== "b";
 
@@ -1170,19 +1389,14 @@
             this.turn = "r";
             this.isThinking = false;
 
-            // [THÊM MỚI] Đánh giá bảng cờ để phát âm thanh sau nước đi của AI
             const newState = this.board.position();
             const isGameOver = this.checkWinCondition(newState);
 
             if (!isGameOver) {
               const isCheck = !this.isBoardStateValid(this.turn, newState);
-              if (isCheck) {
-                this.playSound("check");
-              } else if (isCapture) {
-                this.playSound("capture");
-              } else {
-                this.playSound("move");
-              }
+              if (isCheck) this.playSound("check");
+              else if (isCapture) this.playSound("capture");
+              else this.playSound("move");
             }
           },
 
@@ -1196,16 +1410,14 @@
               currentColor,
               boardState,
             );
-
             if (possibleMoves.length === 0)
               return isMaximizingPlayer ? -9999 : 9999;
 
             if (isMaximizingPlayer) {
               let maxEval = -Infinity;
               for (let move of possibleMoves) {
-                let nextState = this.simulateMove(boardState, move);
                 let evaluation = this.minimax(
-                  nextState,
+                  this.simulateMove(boardState, move),
                   depth - 1,
                   alpha,
                   beta,
@@ -1219,9 +1431,8 @@
             } else {
               let minEval = Infinity;
               for (let move of possibleMoves) {
-                let nextState = this.simulateMove(boardState, move);
                 let evaluation = this.minimax(
-                  nextState,
+                  this.simulateMove(boardState, move),
                   depth - 1,
                   alpha,
                   beta,
@@ -1262,9 +1473,8 @@
               rX: -300,
             };
             let score = 0;
-            for (let sq in boardState) {
+            for (let sq in boardState)
               score += PIECE_VALUES[boardState[sq]] || 0;
-            }
             return score;
           },
 
@@ -1288,7 +1498,6 @@
 
               allSquares.forEach((toSq) => {
                 if (fromSq === toSq) return;
-
                 let targetPiece = boardState[toSq];
                 if (targetPiece && targetPiece[0] === color) return;
 
@@ -1341,14 +1550,9 @@
             let kings = Object.values(boardState).filter((p) => p[1] === "K");
             if (kings.length < 2) {
               let winner = kings[0] === "rK" ? "Đỏ" : "Đen";
-
-              // [THÊM MỚI] Đánh giá phe chiến thắng để phát nhạc Win hay Lose
-              if (this.gameMode === "pve") {
+              if (this.gameMode === "pve")
                 this.playSound(winner === "Đỏ" ? "win" : "lose");
-              } else {
-                this.playSound("win");
-              }
-
+              else this.playSound("win");
               this.showGameOverNotification(winner, "Bắt được Tướng!");
               return true;
             }
@@ -1356,47 +1560,31 @@
             let possibleMoves = this.generateLegalMoves(this.turn, boardState);
             if (possibleMoves.length === 0) {
               let winner = this.turn === "r" ? "Đen" : "Đỏ";
-
-              // [THÊM MỚI] Đánh giá phe chiến thắng để phát nhạc Win hay Lose
-              if (this.gameMode === "pve") {
+              if (this.gameMode === "pve")
                 this.playSound(winner === "Đỏ" ? "win" : "lose");
-              } else {
-                this.playSound("win");
-              }
-
+              else this.playSound("win");
               this.showGameOverNotification(winner, "Chiếu bí / Hết nước đi!");
               return true;
             }
-
             return false;
           },
 
           showGameOverNotification(winner, reason) {
             const colors = this.getSwalColors();
-
-            // Icon SVG cho PvP (Ngôi sao)
             const starIcon = `<svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 mr-3 text-rose-500" viewBox="0 0 20 20" fill="currentColor"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>`;
-
-            // Icon SVG cho Cúp (Khi người chơi thắng AI)
             const trophyIcon = `<svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 mr-3 text-yellow-500" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M8 21l8 0" /><path d="M12 17l0 4" /><path d="M7 4l10 0" /><path d="M17 4v8a5 5 0 0 1 -10 0v-8" /><path d="M5 9m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /><path d="M19 9m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /></svg>`;
-
-            // Icon SVG Robot (Khi máy tính thắng)
             const robotIcon = `<svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 mr-3 text-slate-500 dark:text-slate-400" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M6 8m0 2a2 2 0 0 1 2 -2h8a2 2 0 0 1 2 2v8a2 2 0 0 1 -2 2h-8a2 2 0 0 1 -2 -2z" /><path d="M2 14l4 0" /><path d="M22 14l-4 0" /><path d="M12 2v2" /><path d="M9 13l0 .01" /><path d="M15 13l0 .01" /><path d="M9 17l6 0" /></svg>`;
 
-            // Thiết lập thông báo mặc định cho chế độ 2 người chơi (PvP)
             let titleHtml = `<div class="flex items-center justify-center">${starIcon}Kết thúc trận đấu!</div>`;
             let icon = "success";
             let messageHtml = `<span class='text-lg font-medium'>Phe <b class='${winner === "Đỏ" ? "text-rose-500" : "text-slate-500 dark:text-slate-300"}'>${winner}</b> đã giành chiến thắng!</span>`;
 
-            // Tùy chỉnh thông báo riêng cho chế độ chơi với máy (PvE)
             if (this.gameMode === "pve") {
               if (winner === "Đỏ") {
-                // Người chơi thắng AI
                 titleHtml = `<div class="flex items-center justify-center">${trophyIcon}Chúc mừng!</div>`;
                 icon = "success";
                 messageHtml = `<span class='text-lg font-medium text-emerald-500'>Tuyệt vời! Bạn đã xuất sắc đánh bại AI!</span>`;
               } else {
-                // AI thắng người chơi
                 titleHtml = `<div class="flex items-center justify-center">${robotIcon}Máy tính thắng!</div>`;
                 icon = "info";
                 messageHtml = `<span class='text-lg font-medium text-rose-500'>Rất tiếc! AI đã đánh bại bạn ở ván này!</span>`;
