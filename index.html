@@ -286,7 +286,6 @@
         <div
           class="bg-white dark:bg-slate-800 p-2 sm:p-4 rounded-[2rem] shadow-xl relative w-full max-w-[530px] mx-auto overflow-hidden"
         >
-          <!-- LỚP OVERLAY SẢNH CHỜ -->
           <div
             x-show="gameMode === 'online' && onlineGameStatus === 'waiting'"
             x-transition.opacity
@@ -295,13 +294,13 @@
           >
             <h2 class="text-2xl font-bold text-rose-500 mb-2">Sảnh Chờ</h2>
             <p class="text-slate-600 dark:text-slate-300 mb-6 text-center px-4">
-              Đang kết nối vào phòng...
+              Đang đợi người chơi khác kết nối...
             </p>
             <div
               class="bg-slate-100 dark:bg-slate-800 px-6 py-4 rounded-xl border border-slate-200 dark:border-slate-700 mb-8 text-center shadow-inner"
             >
               <span class="text-sm font-medium text-slate-500 block mb-1"
-                >Tên / ID Phòng:</span
+                >ID Phòng của bạn:</span
               >
               <span
                 x-text="onlineGameId"
@@ -331,7 +330,7 @@
                   d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                 ></path>
               </svg>
-              Đang đợi kết nối...
+              Đang đợi...
             </div>
           </div>
 
@@ -397,7 +396,7 @@
 
           // MULTIPLAYER VARIABLES
           onlineGameId: null,
-          onlineGameStatus: null, // MỚI: 'waiting', 'playing', 'finished'
+          onlineGameStatus: null,
           myPlayerColor: null,
           pollingInterval: null,
 
@@ -588,7 +587,6 @@
           async handleSquareClick(square) {
             if (this.isThinking) return;
 
-            // Khóa click khi đang ở sảnh chờ Online
             if (
               this.gameMode === "online" &&
               this.onlineGameStatus === "waiting"
@@ -596,7 +594,6 @@
               return;
             }
 
-            // Turn validation depending on game mode
             if (
               this.gameMode === "online" &&
               this.turn !== this.myPlayerColor
@@ -645,7 +642,6 @@
             const sourcePiece = pos[source];
             const isCapture = pos[square] && pos[square][0] !== this.turn;
 
-            // --- ONLINE MULTIPLAYER LOGIC ---
             if (this.gameMode === "online") {
               this.isThinking = true;
               try {
@@ -690,7 +686,6 @@
               return;
             }
 
-            // --- LOCAL PVP / PVE LOGIC ---
             let validMove = this.processMove(
               source,
               square,
@@ -776,7 +771,6 @@
             this.selectedSquare = null;
             this.clearHighlights();
 
-            // Clear online polling if switching modes
             if (this.pollingInterval) {
               clearInterval(this.pollingInterval);
               this.pollingInterval = null;
@@ -788,111 +782,62 @@
 
             // --- MULTIPLAYER SETUP ---
             if (this.gameMode === "online") {
-              const result = await Swal.fire({
-                title: "Chế độ Online",
-                text: "Bạn muốn tạo phòng mới hay tham gia phòng đã có?",
-                icon: "question",
-                showDenyButton: true,
-                showCancelButton: true,
-                confirmButtonText: "Tạo Phòng Mới",
-                denyButtonText: "Vào Phòng",
-                cancelButtonText: "Hủy",
+              this.isThinking = true;
+
+              // Hiển thị trạng thái đang tìm phòng tự động
+              Swal.fire({
+                title: "Đang tìm phòng...",
+                text: "Hệ thống đang tự động ghép đôi",
+                icon: "info",
+                allowOutsideClick: false,
+                showConfirmButton: false,
                 background: colors.background,
                 color: colors.color,
+                didOpen: () => {
+                  Swal.showLoading();
+                },
               });
 
-              if (result.isConfirmed) {
-                // Nhập tên phòng tùy chọn
-                const { value: customRoomName } = await Swal.fire({
-                  title: "Tạo phòng mới",
-                  text: "Nhập tên hoặc ID phòng bạn muốn (để trống để tạo mã ngẫu nhiên)",
-                  input: "text",
-                  inputPlaceholder: "Ví dụ: PhongCuaToi",
-                  showCancelButton: true,
-                  confirmButtonText: "Tạo Phòng",
-                  cancelButtonText: "Hủy",
-                  background: colors.background,
-                  color: colors.color,
+              try {
+                // Gọi tới API game-match để lấy hoặc tạo phòng tự động
+                const res = await fetch(`${API_BASE_URL}/game-match`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
                 });
+                const data = await res.json();
 
-                // User cancelled input
-                if (customRoomName === undefined) {
-                  this.setMode("pvp");
-                  return;
-                }
+                if (data.error) throw new Error(data.error);
 
-                this.isThinking = true;
-                try {
-                  const res = await fetch(`${API_BASE_URL}/game-create`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ customId: customRoomName || null }),
-                  });
-                  const data = await res.json();
+                this.onlineGameId = data.gameId;
+                this.myPlayerColor = data.color; // Được server gán 'r' (đợi) hoặc 'b' (vào phòng)
+                this.onlineGameStatus = data.status || "waiting";
+                this.board.position(data.fen);
 
-                  this.onlineGameId = data.gameId;
-                  this.myPlayerColor = "r";
-                  this.onlineGameStatus = "waiting";
-                  this.board.position(data.fen);
-                  this.startPolling();
-                } catch (e) {
-                  Swal.fire({
-                    title: "Lỗi",
-                    text: "Không thể kết nối tới máy chủ.",
-                    icon: "error",
-                    background: colors.background,
-                    color: colors.color,
-                  });
-                }
-                this.isThinking = false;
-              } else if (result.isDenied) {
-                const { value: gameId } = await Swal.fire({
-                  title: "Nhập Tên / ID Phòng",
-                  input: "text",
-                  showCancelButton: true,
-                  confirmButtonText: "Vào Phòng",
-                  background: colors.background,
-                  color: colors.color,
-                });
-
-                if (gameId) {
-                  this.isThinking = true;
-                  try {
-                    const res = await fetch(`${API_BASE_URL}/game-join`, {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ gameId }),
-                    });
-                    const data = await res.json();
-                    if (data.error) throw new Error(data.error);
-
-                    this.onlineGameId = data.gameId;
-                    this.myPlayerColor = "b"; // Joiner plays Black
-                    this.onlineGameStatus = "waiting"; // Vào sảnh chờ thay vì chơi luôn
-                    this.board.position(data.fen);
-                    this.startPolling();
-                  } catch (e) {
-                    Swal.fire({
-                      title: "Lỗi",
-                      text:
-                        e.message || "Không tìm thấy phòng hoặc phòng đã đầy",
-                      icon: "error",
-                      background: colors.background,
-                      color: colors.color,
-                    });
-                    this.onlineGameId = null;
-                  }
-                  this.isThinking = false;
+                // Quan trọng: Cố định góc nhìn bàn cờ cho người chơi Đen (vào phòng sau)
+                if (this.myPlayerColor === "b") {
+                  this.board.orientation("black");
                 } else {
-                  // User cancelled
-                  this.setMode("pvp");
+                  this.board.orientation("red");
                 }
-              } else {
+
+                Swal.close();
+                this.startPolling();
+              } catch (e) {
+                Swal.fire({
+                  title: "Lỗi",
+                  text: e.message || "Không thể kết nối ghép đôi.",
+                  icon: "error",
+                  background: colors.background,
+                  color: colors.color,
+                });
+                this.onlineGameId = null;
                 this.setMode("pvp");
               }
+              this.isThinking = false;
             } else {
               // Local setup (PvP / PvE)
               this.myPlayerColor = "r";
+              if (this.board) this.board.orientation("red"); // Trả lại hướng mặc định
               this.shufflePieces();
               this.board.position(this.startPosition);
 
@@ -917,7 +862,6 @@
             }, 100);
           },
 
-          // --- ONLINE SYNC (POLLING) ---
           startPolling() {
             this.pollingInterval = setInterval(async () => {
               if (!this.onlineGameId) return;
@@ -927,7 +871,6 @@
                 );
                 const data = await response.json();
 
-                // Cập nhật trạng thái phòng (để đóng màn hình Sảnh Chờ)
                 if (
                   data.status === "playing" &&
                   this.onlineGameStatus === "waiting"
