@@ -295,13 +295,13 @@
           >
             <h2 class="text-2xl font-bold text-rose-500 mb-2">Sảnh Chờ</h2>
             <p class="text-slate-600 dark:text-slate-300 mb-6 text-center px-4">
-              Đang chờ đối thủ tham gia phòng...
+              Đang kết nối vào phòng...
             </p>
             <div
               class="bg-slate-100 dark:bg-slate-800 px-6 py-4 rounded-xl border border-slate-200 dark:border-slate-700 mb-8 text-center shadow-inner"
             >
               <span class="text-sm font-medium text-slate-500 block mb-1"
-                >Tên / ID Phòng của bạn:</span
+                >Tên / ID Phòng:</span
               >
               <span
                 x-text="onlineGameId"
@@ -826,14 +826,13 @@
                   const res = await fetch(`${API_BASE_URL}/game-create`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    // Gửi customRoomName lên API, nếu trống nó sẽ lấy undefined/null
                     body: JSON.stringify({ customId: customRoomName || null }),
                   });
                   const data = await res.json();
 
-                  this.onlineGameId = data.gameId; // Lưu ID/Tên phòng trả về
+                  this.onlineGameId = data.gameId;
                   this.myPlayerColor = "r";
-                  this.onlineGameStatus = "waiting"; // Chuyển sang Sảnh chờ
+                  this.onlineGameStatus = "waiting";
                   this.board.position(data.fen);
                   this.startPolling();
                 } catch (e) {
@@ -869,19 +868,9 @@
 
                     this.onlineGameId = data.gameId;
                     this.myPlayerColor = "b"; // Joiner plays Black
-                    this.onlineGameStatus = "playing"; // Vào phòng thành công -> Chơi luôn
+                    this.onlineGameStatus = "waiting"; // Vào sảnh chờ thay vì chơi luôn
                     this.board.position(data.fen);
                     this.startPolling();
-                    Swal.fire({
-                      title: "Thành công",
-                      text: `Đã vào phòng ${gameId}`,
-                      icon: "success",
-                      toast: true,
-                      position: "top",
-                      timer: 2000,
-                      background: colors.background,
-                      color: colors.color,
-                    });
                   } catch (e) {
                     Swal.fire({
                       title: "Lỗi",
@@ -944,8 +933,12 @@
                   this.onlineGameStatus === "waiting"
                 ) {
                   this.onlineGameStatus = "playing";
+                  let alertTitle =
+                    this.myPlayerColor === "r"
+                      ? "Đối thủ đã vào!"
+                      : "Vào phòng thành công!";
                   Swal.fire({
-                    title: "Đối thủ đã vào!",
+                    title: alertTitle,
                     text: "Trận đấu bắt đầu",
                     icon: "success",
                     toast: true,
